@@ -1,0 +1,44 @@
+name = "capacity-n20"
+question = "At n_slots=20 with 400k of capital (the put-delta-ladder convention of 20k per slot), what are the current frozen config's numbers -- the anchor card every batch-1 n20 bar is measured against?"
+base = "frozen"
+status = "testing"
+created = "2026-08-17"
+updated = "2026-08-17"
+note = """
+WAVE 0 OF GATE-CAMPAIGN BATCH 1 (orchestrator, 2026-08-17). NOT A MECHANIC.
+Zero knobs, on purpose: this resolves byte-identical to `frozen`, so both arms
+are the SAME config and every metric delta must be exactly zero. Same
+construction and same reasoning as `capacity-baseline`, at the second width.
+
+WHY IT EXISTS. Every batch-1 arm's bar has an n20 leg ("total_return >= base
+- 10pp AND ret/DD >= base - 0.35 at n5 AND n20", or stricter), and NO n20 card
+of the current frozen config exists -- the promotions of 2026-08-16/17
+(call_take_profit_pct=1.0, liq floors 10/4) invalidated everything before
+them. A bar referenced against a card that does not exist is not a bar. This
+run is the anchor.
+
+WHY A SEPARATE VARIANT FILE RATHER THAN AN OPS EDIT. Two reasons, both
+structural (confirmed against bench/scorecard.py, 2026-08-17):
+
+  1. The scorecard filename is `{tier}__{config_hash}.json` and the config
+     hash covers KNOBS only -- the same variant run at two widths writes the
+     SAME filename, so the second card would overwrite the first.
+  2. `is_stale_for` (ops-aware since commit 92e534b) compares the card's
+     recorded n_slots/capital/selector against the variant's CURRENT resolved
+     ops -- one variant cannot hold two fresh cards at two widths.
+
+So a second width is expressed as a paired variant file, and n5/n20 cards stay
+distinct, separately-fresh evidence. This is the width convention for every
+batch-1 confirmation run.
+
+WIDTH AND CAPITAL. n_slots=20 at capital=400,000 keeps 20k per slot -- the
+same per-slot capital as the n5/100k cards, per the put-delta-ladder
+precedent, so a width comparison changes ONE thing (breadth) and not two
+(breadth and per-slot buying power).
+"""
+
+[ops]
+# OVERRIDES THE SHARED [ops] (plain.toml) ON TWO FIELDS, together: width and
+# the capital that keeps per-slot buying power constant at 20k.
+n_slots = 20
+capital = 400000.0

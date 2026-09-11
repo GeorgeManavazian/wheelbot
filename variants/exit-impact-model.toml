@@ -1,0 +1,75 @@
+name = "exit-impact-model"
+question = "Charging extra slippage on oversized SELL_CALL/CLOSE_PUT fills (the two legs that cannot refuse) instead of pricing them at the clean quote -- does it materially change P&L, or just make the fill log honest?"
+base = "frozen"
+status = "promoted"
+created = "2026-08-26"
+updated = "2026-09-05"
+touches = ["liquidity", "fills", "slippage"]
+note = """
+THE GAP THIS CLOSES. `liq-junk-floor`'s promotion note (2026-08-17) measured
+--check-fills on all live fills and found the entry leg (SELL_PUT) perfectly
+clean -- floor and size cap both hold -- while SELL_CALL and CLOSE_PUT, which
+are exempt from every liquidity check by design (you cannot refuse to exit a
+position you hold, and a covered call refused leaves shares naked), carried
+the actual implausible fills: one SELL_CALL at 110% of the day's open
+interest, another at 2,100% of the day's volume, 16 of 98 call fills on a
+strike with zero volume that day. That note named the fix as "the next piece
+of work, not a defect of this one." This is that work.
+
+WHY A COST MODEL, NOT A GATE. Both legs are structurally unrefusable, so the
+only lever is PRICE: charge the fill for its own size instead of pricing it
+at the clean quote a small, liquid order would get.
+
+THE NUMBER IS NOT FITTED. `exit_impact_max_spreads = 1.0` reuses the ratio
+already promoted for entry-side sizing -- 10% of open interest, 25% of
+volume -- and caps the penalty at exactly ONE extra bid-ask spread, however
+far past that ratio the order sits. One spread-width is the smallest
+non-zero, non-arbitrary economic assumption available: it says a badly-sized
+fill costs at most what the market's own quoted cost of trading already
+prices in, paid once more. This is a LOWER BOUND on the real impact of a
+2,100%-of-volume order, not an estimate of it -- if the effect matters even
+at this floor, the true cost is probably worse, not better.
+
+THE BAR, DECLARED BEFORE THE RUN -- REVISED AFTER SMOKE. The first draft of
+this bar demanded campaign count stay unchanged. Wrong: the impact price is
+applied to `mark` BEFORE the take-profit/write-feasibility checks, on
+purpose, so a call too large to sell at a real price can also fail to clear
+the credit floor, and a put too large to buy back cheaply can fail its own
+take-profit trigger that day. Both are supposed to change WHETHER a leg
+closes, not only what it is recorded at -- pricing the fill honestly and then
+still deciding on the clean price would be the actual bug. Smoke confirmed
+this: campaigns moved 15 -> 13 on the smoke tier.
+  MECHANISM: entry-side warnings (entry_gated_*) and SELL_PUT behavior must
+    be UNCHANGED -- this model touches only the covered-call write and the
+    put buyback, never the entry path. A change on the entry side would mean
+    the model touched the entry path.
+  OUTCOME: campaign count and total return may both move (see above), but in
+    the direction that costs money, never the direction that makes it --
+    this model can only ever remove credit or add cost, so a favorable swing
+    would mean a sign error.
+  FALSIFIED IF: entry-side warning counts change at all, or total return
+    moves in the FAVORABLE direction versus `frozen`.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.exit_impact_max_spreads]
+value = 1.0
+why = """
+Caps the extra slippage charged on an oversized covered-call write or put
+buyback at one bid-ask spread, however far past the entry-side size ratio (10%
+of open interest, 25% of volume) the order sits; 1.0 is the smallest non-zero
+assumption and a declared lower bound on the real cost of such fills.
+"""
+source = "liq-junk-floor promotion note (2026-08-17), --check-fills on capacity-baseline"
+
+[[evidence]]
+kind = "promotion"
+date = "2026-09-05"
+verdict = "Adopted 2026-09-05: covered-call writes and put buybacks now pay for their own size instead of pricing at the clean quote -- the two legs that can never refuse a fill. Live tier, clean tree: total return +8.16% against +22.92% for the base arm (-14.76pp), Sharpe 0.34 against 0.72, campaigns 104 against 142. Same lower-bound cap (1 spread) the promotion note declared; entry-side decisions unchanged on a flat-state replay of the one captured live day (0 of 0 differed), and the entry-warning-count drift in the full backtest follows from different campaign timing."
+scorecard = "live/f92ee3aba856bf77"
+engine = "094d658cc678"
+data = "b3cbc28b26c62418"
+sharpe_delta = "-0.383"
+ret_per_maxdd_delta = "-0.651"

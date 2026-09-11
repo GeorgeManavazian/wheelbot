@@ -1,0 +1,67 @@
+name = "wx-stabilised"
+question = "Does waiting for a dip to TURN -- price below the 21-day mean with the 9-day mean rising over three sessions -- beat entering a dip that may still be in progress?"
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C9 of the ten-candidate brief. THE OWNER'S OBJECTION TO HALF B, ANSWERED
+DIRECTLY.
+
+The objection to `wx-half-b` was "below both seems like the stock could be
+dropping quite hard". This is the test that separates the two cases: a dip that
+has STOPPED from a dip still in progress. `chop_max_fast_fall` already reaches
+for this and can only express it as a LEVEL -- is the 9-day mean below the 20-day
+-- which says a fall happened, not whether it is over. The 3-day slope of the
+9-day mean is the TURN.
+
+MEASURED, AND IT IS SEVERE (2026-08-15, 17,465 gate-passing ticker-days). Only
+6.0% of currently-admitted days are both below the 21-day mean AND have a rising
+9-day mean -- about 2.2 candidates per session against 5 slots. This arm is
+EXPECTED TO STARVE THE BOOK, stated before the run.
+
+Two things make that worth measuring anyway. First, the brief predicted a low hit
+rate and said to check the entry count, so this is the pre-registered outcome
+being confirmed rather than a surprise. Second, the number 6.0% is itself the
+finding: the live gate's admitted days are, in the median, ABOVE their 21-day
+mean (median dip_z +0.371), so "a dip that has turned" is not a subset of what
+the bot trades -- it is nearly disjoint from it.
+
+THE OTHER COUNTER, from the brief: a 3-day slope on a 9-day average is a very
+short signal and will be noisy. There is no plateau to check in the usual sense
+because the only free number is the 3-day window, so if this passes, 2-day and
+5-day windows would be the check -- and those are not precomputed, which is
+itself a reason not to promote on this arm without more engine work.
+
+WHY `n_slots = 5`. Load-bearing here for the same reason as `wx-dip-z`: at one
+slot, 2.2 candidates a session still fills the book and the starvation is
+invisible.
+
+PASS/FAIL, declared before the run. FAIL on entry count below ~60% of base, which
+is the expected outcome. If it starves and still improves ret/DD, the honest
+report is that a preference or a wider stabilisation test is the next question --
+not that this arm is promotable.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_require_fast_turn]
+value = true
+why = """
+Enter only when the close is below its 21-day mean AND the 9-day mean has risen
+over the last 3 sessions.
+
+Two conditions, no thresholds. That is the design: "below the mean" and "turning
+up" are both directional, so neither needs a tolerance, and this arm therefore
+introduces ZERO free numbers beyond the 3-session window. On a sample of 54
+assigned campaigns, a candidate with no fitted threshold is worth more than a
+better-scoring one with two.
+
+The 9-day mean rather than price itself because price alone flips on any single
+session; a 3-day slope on a 9-day mean is the shortest statement of "the fall has
+stopped" that is not simply yesterday's tick.
+"""
+since = "2026-08-15"
+source = "2026-08-15 -- Weather-gate labelling, ten candidates, build brief"

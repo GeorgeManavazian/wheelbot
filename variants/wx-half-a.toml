@@ -1,0 +1,66 @@
+name = "wx-half-a"
+question = "Does keeping only half A -- the half that measured worse on every metric -- lose as badly as keeping only half B did? If both halves lose, the damage is the restriction itself, not which half was kept."
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+THE PLACEBO FOR C1. Written after `wx-half-b` returned and before this ran.
+
+`wx-half-b` came back WORSE than the live gate on every risk measure -- Sharpe
+-0.34 against -0.02, ret/DD -0.47 against -0.16, total -12.55% against -4.37% --
+and, decisively, was assigned MORE often, not less: 25.6% against 18.3%, on 82
+campaigns against the base arm's 109.
+
+That reverses the measurement the candidate was built on. The realized log said
+half B assigned at 12.9% and half A at 22.3%. A gate that selects its own book
+and keeps only B assigns at 25.6%.
+
+THE OBVIOUS EXPLANATION, and the reason this arm exists. The 272 realized
+campaigns were not a random sample of half A and half B days -- they were the
+names that won a ranked competition for a slot on the days they were entered.
+Restricting the gate to half B does not hand the bot the same 70 B-campaigns it
+took before; it hands it a book in which B names now have to fill FIVE slots
+every session instead of winning a few, so the marginal B name entered is much
+further down the quality ranking than any B name in the log. Re-labelling a log
+cannot see that, because the marginal name it describes was never traded.
+
+If that is the mechanism, then keeping only half A should ALSO be worse than the
+live gate -- for the same reason, and roughly as much -- because it is the
+narrowing that hurts, not the direction. This arm tests exactly that.
+
+DECLARED BEFORE THE RUN:
+  * If `wx-half-a` is ALSO clearly worse than base, the finding is "halving the
+    pool costs more than either half's edge is worth", which kills C1 and C10
+    together and explains them, rather than leaving C1 as an unexplained
+    reversal.
+  * If `wx-half-a` is BETTER than base, then the direction is real and simply
+    the opposite of what the log implied -- which would be a genuine finding and
+    a much more uncomfortable one, since it would mean the log study inverted a
+    live signal.
+  * If `wx-half-a` is roughly flat, the log's A/B ordering is not reproducible in
+    selection at all.
+
+WHY `n_slots = 5`. Identical to `wx-half-b`; a placebo run under different
+conditions is not a placebo.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_half]
+value = "A"
+why = """
+Keep only half A: above the 200-day mean with the 50-day below it, a name
+recovering off a downtrend.
+
+Chosen as the weaker half. On the realized log this is the side that assigned
+at 22.3%, earned $56 a campaign against B's $346, was negative in 2 of 5 years,
+took 80% of its total from 2023 alone, and carried all six losing campaigns.
+
+Its only job is to answer whether `wx-half-b`'s failure was about B or about
+halving the pool. Never promotable, whatever it returns.
+"""
+since = "2026-08-15"
+source = "placebo arm for wx-half-b, declared 2026-08-15 before running"

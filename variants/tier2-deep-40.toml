@@ -1,0 +1,138 @@
+name = "tier2-deep-40"
+question = "Does tier 2 work once it is gated DEEP -- the 0.80-delta rescue call allowed only after spot has fallen 40% below net basis -- instead of firing on the routine case that rejected exit-ladder-on?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-17"
+updated = "2026-08-17"
+touches = ["exit"]
+verdict = """
+REJECTED 2026-08-17 (Analyzer, batch 1). Deepest rung. P&L clauses passed
+within noise (+21.32% = base-1.6pp; ret/DD 0.98; one year-bucket worse >3pp)
+-- but both primary metrics failed: days_uncovered 638 ~= base's 641 (jam not
+touched) and pnl/sd_assigned +$0.82 vs >=$11.77. Fired 3 times; the log
+prices two: ACN -- a 150-strike tier-2 call on a 280-strike assignment,
+realized -$11,707 -- and ALB, realized -$4,126 on the same entry the base
+exited at +$165. The arm is base-plus-three-paid-mistakes; rare converged to
+inert-minus-losses, not to profitable. Not a hair-pass: primary bar failed.
+Dial across {20,30,40}: bb-campaigns 9/4/3 and days_uncovered 328/538/638
+both monotone as predicted, ret/DD -0.23/0.38/0.98 monotone in rarity --
+same reading as tier3: every fire costs money.
+
+Scorecard: bench/scorecards/tier2-deep-40/live__a2de389a183bfd08.json
+(engine 0838351260cf, dirty=false).
+"""
+note = """
+GATE-CAMPAIGN BATCH 1, WAVE 1 (Analyzer bar v2, 2026-08-17). Rung 0.20 of a
+MANDATORY three-rung ladder (tier2-deep-40 / -30 / -40) -- never read one rung
+alone.
+
+THE ARM. assignment_exit on, exit_trigger = "pct_below_basis" with
+exit_trigger_pct at this rung's depth, exit_call_delta = 0.80 UNCHANGED from
+the engine default (one moving part: the trigger), exit_stop =
+"spot_below_strike" (the standard ladder backstop under the tier-2 strike).
+
+WHAT CHANGED VS THE REJECTION -- the trigger, not the call. exit-ladder-on
+(rejected 2026-08-17) ran the identical 0.80-delta tier-2 call with
+exit_trigger = "tier1_impossible", so it fired on the ROUTINE case: any day
+tier 1 could not write, which is 585 slot-days of the base config. Result:
+below-basis call credit 19,179 -> 53,206 dollars, the recovery sold away for
+a one-off credit, ret/DD 1.03 -> -0.46. Gated deep, the same call fires only
+where recovery odds are worst -- the p10 cluster of never-resolving
+assignments sits at -31.9% -- collecting a fat credit with a near-certain
+call-away that frees the slot, and tier 3 backstops it if the stock keeps
+falling through the tier-2 strike.
+
+SMALL-N WARNING, IN THE FILE BEFORE THE RUN: only ~4-6 campaigns ever reach
+-30% against ~28 base assignments in this window, so this ladder is graded on
+DIAGNOSTICS plus no-degradation, never on a P&L win. A P&L win at this n would
+itself be suspicious.
+
+THE BAR, DECLARED BEFORE THE RUN (Analyzer, final version).
+
+  REJECT REGARDLESS OF P&L: below-basis call writes on more than 1/3 of
+  assigned campaigns -- routine firing is exit-ladder-on again. Checkable from
+  the card as campaigns_with_below_basis_call / assignments (scorecard schema
+  2, built for this bar); the trade-log fallback with a stated caveat applies
+  only if the counter proves faulty.
+
+  PASS AT THE SHIPPING RUNG requires ALL of:
+    * days_uncovered <= 500
+    * pnl_per_slotday_assigned >= 11.77 dollars (the base figure)
+    * sold_per_assignment <= 1/3
+    * at n5 AND n20: total_return >= base - 10pp AND ret_per_maxdd >= base - 0.35
+    * year-bucket rule: worse than base in at most 1 of 3 buckets
+      (2024/2025/2026) by more than 3pp
+
+  DIAL CHECK across the ladder:
+    * shallower trigger -> days_uncovered monotonically LOWER and tier-2
+      writes monotonically HIGHER
+    * middle-rung ret/DD must not exceed both neighbours by more than 0.5
+      (the -40% spike detector).
+
+SHARED BATCH RULES. Noise band: at n5, total_return within base - 10pp is
+"not degraded".
+"""
+
+[ops]
+# The shared [ops] is n_slots = 1, at which an exit mechanic has almost
+# nothing to fire on. Five is the width every capacity claim is stated at.
+n_slots = 5
+
+[knobs.assignment_exit]
+value = true
+why = """
+ON -- arms the ladder. Never naked: tier 3 sells shares only if the short is
+closed in the same step, else the sale is refused (engine invariant, tested).
+The difference from the rejected exit-ladder-on arm is entirely in
+exit_trigger below: same rungs, same 0.80-delta call, different (deep) gate.
+"""
+source = "exit-ladder-on verdict 2026-08-17; Analyzer batch-1 v2"
+
+[knobs.exit_trigger]
+value = "pct_below_basis"
+why = """
+The repair this ladder tests. "tier1_impossible" made tier 2 fire on the
+routine case (585 base slot-days) and that firing pattern is what rejected
+exit-ladder-on. "pct_below_basis" gates the same rescue call on DEPTH: it can
+only fire once spot has fallen exit_trigger_pct below net basis -- the
+never-resolver territory where holding has already been measured to cost 51%
+of all held-days for 4 of 40 assignments.
+"""
+source = "exit-ladder-on scorecard live (rejected 2026-08-17); 2026-08-14 stuck-campaign review"
+
+[knobs.exit_trigger_pct]
+value = 0.40
+why = """
+The gate depth: tier 2 may fire once spot is 40% below net basis. This is the
+DEEP rung of the mandatory 0.20/0.30/0.40 ladder: past the p10 never-resolver
+cluster (-31.9%), so tier 2 should fire on almost nothing -- if tier-2 writes
+are not monotonically LOWEST here, the dial is broken and the ladder reads as
+noise. Three rungs, never one: ~4-6 reachable campaigns cannot support a
+fitted threshold, and the ladder's monotonicity is the evidence, not any
+single rung's number.
+"""
+source = "Analyzer batch-1 v2 ladder spec (2026-08-17)"
+
+[knobs.exit_call_delta]
+value = 0.80
+why = """
+UNCHANGED from the engine default, set explicitly so the file states its own
+experiment: the trigger is the only moving part in this ladder. 0.80 is deep
+enough that the call-away is near-certain (the strike sits well below spot,
+cushion down to K), which is what makes firing it AT DEPTH an exit rather
+than a cap -- and it is the exact value whose routine firing was measured and
+rejected in exit-ladder-on, so holding it fixed isolates the trigger as the
+explanation for any difference.
+"""
+source = "wheel.py exit_call_delta default; exit-ladder-on verdict"
+
+[knobs.exit_stop]
+value = "spot_below_strike"
+why = """
+The standard ladder backstop, unchanged from the engine default and set
+explicitly: if the stock falls through the tier-2 strike, the call is closed
+and the shares are sold. Alive in this arm because tier 2 CAN fire (unlike
+exit_trigger="never", where this mode is the documented inert-arm trap) --
+pos["exit_strike"] is set by the tier-2 write and tier3_stop_hit reads it.
+"""
+source = "portfolio.tier3_stop_hit; exit-ladder-on verdict (inert-arm trap)"

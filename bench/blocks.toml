@@ -1,0 +1,680 @@
+# THE BLOCK CATALOG — every mechanic the wheel bot has, in plain language.
+#
+# WHAT THIS IS FOR. The owner asked to stop being "confused and in the dark"
+# about what the bot does on each run. `WheelConfig` has 41 fields, and reading
+# 41 fields tells you nothing about what the bot DOES. This file groups them
+# into 18 mechanics — blocks — each with a one-sentence description anyone can
+# read, and the story of why it exists.
+#
+# THE RULE THAT MAKES IT TRUSTWORTHY: every WheelConfig field belongs to
+# EXACTLY ONE block. `bench/tests/test_bench_blocks.py` fails if a field is
+# missing, claimed twice, or unknown. So a new mechanic cannot be added to the
+# engine and stay invisible here — which is the whole point. The block view is
+# only worth looking at if it is guaranteed complete.
+#
+# `does` is one sentence, no jargon. `why` is the story, with the real numbers.
+# `watch_out` is the gotcha, when there is one.
+#
+# Read it: `scripts/wheelbench blocks`  ·  the Blocks page in the dashboard
+# Edit it: by hand. This file is documentation; nothing writes it automatically.
+
+schema = 1
+
+# ---------------------------------------------------------------------------
+# Categories, in the order a trade meets them.
+# ---------------------------------------------------------------------------
+
+[[categories]]
+id = "entry"
+name = "Entry"
+order = 1
+blurb = "What the bot sells, and the tests a name has to pass before it will sell anything at all."
+
+[[categories]]
+id = "precaution"
+name = "Precautions"
+order = 2
+blurb = "Refusals. Each one exists because a specific bad trade got through once."
+
+[[categories]]
+id = "liquidity"
+name = "Liquidity"
+order = 3
+blurb = "Can this contract actually be traded at the price the backtest assumed? The difference between a real fill and a printed one."
+
+[[categories]]
+id = "exit"
+name = "Exit"
+order = 4
+blurb = "What happens after a put is assigned and the bot owns the stock."
+
+[[categories]]
+id = "cost"
+name = "Costs"
+order = 5
+blurb = "What every fill actually costs. Small numbers that decide whether short-dated trades are worth doing."
+
+[[categories]]
+id = "setup"
+name = "Account"
+order = 6
+blurb = "The account itself, not a strategy rule."
+
+# ---------------------------------------------------------------------------
+# ENTRY
+# ---------------------------------------------------------------------------
+
+[[blocks]]
+id = "short-put-terms"
+category = "entry"
+order = 1
+name = "The put it sells"
+knobs = ["put_delta", "target_dte"]
+does = "Picks which strike price and which expiry date the bot sells a put at."
+why = """
+This is the trade itself — everything else in this catalog either permits it or
+cleans up after it. Delta is roughly "the market's odds this ends up in the
+money", so 0.30 means the bot is aiming at strikes with about a 30% chance of
+being assigned. Days-to-expiry is how long it commits the cash for; the live
+value is 11.
+
+The bot does not demand exactly 11 days — it accepts a band around the target,
+`max(5, target-2)` to `target+4`. That band being seven days wide is not an
+arbitrary choice: most stocks list Friday expiries only, so on any given weekday
+the available expiries fall on one repeating 7-day pattern, and seven
+consecutive numbers always contain one while six can miss. The band was six
+days wide until 2026-08-09, and it missed — no Thursday resolved at target 11,
+no Monday at target 7. The bot could not enter weekly-only names one day in
+five, for its entire life, and nothing logged it.
+"""
+watch_out = "The live 0.30 delta / 11 DTE / 60% take-profit triple has never been tested as a set against the alternatives — it is inherited, not proven."
+[blocks.on_when]
+kind = "always"
+
+[[blocks]]
+id = "take-profit"
+category = "entry"
+order = 2
+name = "Take profit early"
+knobs = ["take_profit_pct"]
+does = "Buys the option back once most of the money has already been made, instead of holding it to expiry."
+why = """
+Sell a put for $1.00, and at 60% the bot pays $0.40 to close it and takes the
+$0.60. It gives up the last 40 cents to free the slot and stop carrying the
+risk of the final days.
+
+There is a catch worth understanding, because it is genuinely counter-intuitive:
+this same rule applies to covered calls, and taking profit on a covered call
+buys the call back and KEEPS YOU IN THE STOCK. Letting a call run to expiry is
+how you get called away — which is itself an exit. So "taking profit" on the
+call side is the opposite of getting out.
+
+The setting also interacts with the minimum credit: if a put pays so little that
+40% of it rounds below one cent, the exit can never fill, and the bot refuses
+the trade up front rather than opening something it cannot close.
+"""
+watch_out = ""
+[blocks.on_when]
+kind = "any_set"
+
+[[blocks]]
+id = "chop-weather-gate"
+category = "entry"
+order = 3
+name = "The weather gate"
+knobs = ["chop_max_ma_spread", "chop_max_fast_spread", "chop_max_fast_fall"]
+does = "Refuses to sell puts on a stock whose short-term price is falling fast."
+why = """
+Selling a put is a bet a stock will not fall much. Doing it into a stock already
+falling hard is the falling-knife trade — you collect a small premium and get
+handed the shares near the bottom. This gate is the bot's only test of market
+conditions before it enters.
+
+Three versions were tried and A/B tested on 2026-07-18. The one that survived is
+DOWN-ONLY: reject a name whose short-horizon trend has turned down by more than
+1%, but keep names moving up. The logic is asymmetric because the risk is
+asymmetric — a put seller loses on a fall, not on a rise, so refusing rising
+stocks throws away winners for nothing. The symmetric version cut profit by 71%
+and the structural version went negative outright. Both were dropped.
+"""
+watch_out = ""
+[blocks.on_when]
+kind = "any_set"
+
+[[blocks]]
+id = "chop-relabelling"
+category = "entry"
+order = 7
+name = "What counts as calm weather"
+knobs = ["chop_half", "chop_fast_pair", "chop_max_realized_vol",
+         "chop_max_ma_band", "chop_min_ma50_slope", "chop_ma50_slope_window",
+         "chop_drawdown_band", "chop_dip_z_band", "chop_require_fast_turn",
+         "chop_drop_trend_label", "prefer_chop_half"]
+does = "Changes the DEFINITION of the calm weather the gate above looks for, rather than the tolerance it applies."
+why = """
+The block above asks "is the short-term trend falling?". This one asks the prior
+question: what does the bot mean by "calm" in the first place? Today it means one
+word — "chop" — and that word is a leftover. A stock is labelled a chop if it is
+neither a clean uptrend nor a clean downtrend, which merges two states that are
+close to opposites: a name that has fallen a long way and is climbing back (A),
+and a name in an uptrend that is having a dip (B).
+
+Measured over 272 real campaigns on 2026-08-15, they behave nothing alike. Half A
+is three quarters of everything the bot trades, gets assigned 22.3% of the time
+and earns about $56 a campaign. Half B is a quarter of the trading, gets assigned
+12.9% of the time, earns about $346 a campaign, and did not contain a single one
+of the six trades that lost real money.
+
+The other thing worth knowing is what the label never looks at. It compares two
+averages and asks whether today's volatility is high FOR THAT STOCK. It never
+asks how volatile the stock is in absolute terms, never asks whether the averages
+have actually converged (which is what "range-bound" means), and never asks
+whether an average is rising or falling — only whether one sits above another,
+a comparison that can be months out of date.
+
+Each knob here restores one of those missing questions, and every one is off
+until a bench run earns it. The last one is not a refusal at all: it lets the
+bot keep trading both halves and simply put one at the front of the queue when
+more names pass than there are slots. That distinction matters here more than
+anywhere else in the catalog, because every outright refusal this project has
+measured lost money by leaving slots empty, not by picking badly.
+"""
+watch_out = "Half B was only 23% of available trading days, so preferring it may make the bot trade LESS rather than better — which is why the sort preference exists alongside the veto."
+[blocks.on_when]
+kind = "any_set"
+
+[[blocks]]
+id = "ranking"
+category = "entry"
+order = 4
+name = "Which name gets the slot"
+knobs = ["rank_by", "rank_window", "prefer_rank_window"]
+does = "When more stocks pass every test than there are open slots, this decides which ones actually get traded."
+why = """
+The bot runs a fixed number of positions at once. On most days far more names
+pass the gates than there are slots, so something has to choose — and that
+choice is quietly one of the biggest decisions in the system.
+
+Today it sorts by realized volatility, highest first: it takes the jumpiest
+stock available. The objection is that this reads how risky a name is and never
+reads how much it is being PAID for that risk. And because the weather gate has
+already thrown out the most volatile names, the sort ends up choosing inside a
+narrow band, on arguably the wrong variable.
+
+The alternative — ranking by IV rank, meaning how expensive a stock's options
+are against their own history — is built and switched off. In the 2026-08-09
+ten-arm test it lost: all nine ranker arms scored worse than the plain sort on
+both Sharpe and return-per-drawdown. That test ran at one slot and without the
+open-interest floor, so it is a signal rather than a verdict.
+
+`rank_window` (2026-08-18, batch 3) is this block's measurement instrument
+rather than a strategy proposal: [a, b] takes entries from ranks a..b of the
+sorted pool instead of its top, so "does the ranking carry any signal at all"
+becomes one A/B (ranks 6-10 vs 1-5) instead of an argument. Display caveat:
+this block's on/off bracket keys on `rank_by` alone, so a config that sets
+only `rank_window` prints the window's value under an off bracket — the knob
+line, not the bracket, is authoritative for the window.
+
+`rank_by = "none"` (2026-08-18, batch 4) is the block's inertness CONTROL:
+it deletes the sort outright — gate-passers fill in fixed universe order,
+every candidate stays in the pool, nothing can starve — after the batch-3
+slices confounded ordering with starvation (86-229 window-empty days).
+
+`prefer_rank_window` (2026-08-18, batch 4) is the preference form of the
+slice: ranks [a, b] of the sorted pool move to the FRONT of the queue,
+ordinary rank order inside each tier, full-pool fallback behind — a
+re-ordering that cannot starve (the prefer_chop_half shape), so any gap it
+shows is ordering signal clean of the window_empty confound. Same display
+caveat as `rank_window`: the on/off bracket keys on `rank_by` alone, so the
+knob line, not the bracket, is authoritative for the window.
+"""
+watch_out = "Those ten arms recorded no engine version, no data fingerprint and no config hash, so the bench treats them as archive, not evidence. Re-run with `bench run iv-ranker` to make them count."
+[blocks.on_when]
+kind = "not_value"
+knob = "rank_by"
+value = "vol_pctile"
+
+[[blocks]]
+id = "iv-rank-floor"
+category = "entry"
+order = 5
+name = "Cheap-volatility veto"
+knobs = ["min_iv_rank"]
+does = "Refuses to sell an option when that stock's options are cheap compared to their own recent history."
+why = """
+The signal behind this is real and was measured carefully: across 42,226
+gated ticker-days on 153 names, the average trade lost money overall and only
+crossed into profit around the top 12-15% of a stock's own volatility range.
+Selling cheap volatility is, on average, a losing trade.
+
+It was still rejected on 2026-08-04, and the reason is the most useful lesson in
+the whole project. Turned on as a veto it did exactly what the signal predicted
+— profit per trade rose about 14% — but it HALVED the number of trades, and
+total return fell 18 points, from +43.0% to +24.9%, with Sharpe down 0.26. This
+bot makes its money by turning capital over. Anything that halves the number of
+trades has to clear an enormous bar, and a 14% improvement per trade does not
+come close.
+
+It is kept, switched off, as the measuring instrument for the open question of
+whether the same signal works as a sort rather than a veto.
+"""
+watch_out = "Do not switch this on without re-reading the vault note \"IV rank as an entry veto — measured and rejected\"."
+[blocks.on_when]
+kind = "any_set"
+
+[[blocks]]
+id = "regime-gates"
+category = "entry"
+order = 6
+name = "Market-regime gates"
+knobs = ["regime_entry_gate", "regime_roll_gate", "regime_stop_gate", "conviction_trim"]
+does = "Stops the bot opening, rolling or stopping out while the market is falling without the panic pricing that usually pays you for it."
+why = """
+An older layer that reads a broad market state — trending or not, calm or
+stressed — and acts on exactly one combination: falling, but calm. The reasoning
+is that a quiet decline is the worst thing that can happen to a put seller,
+because the price drops without option premium rising to compensate.
+
+Deliberately never extended into a per-case table. Of the three gates, the
+durable finding recorded in the vault is that only the stop gate was worth
+carrying.
+"""
+watch_out = "The live bot CANNOT run any of these — the portfolio engine refuses them by name. They only work in the older single-stock engine, so they are history rather than options."
+[blocks.on_when]
+kind = "any_set"
+
+# ---------------------------------------------------------------------------
+# PRECAUTIONS
+# ---------------------------------------------------------------------------
+
+[[blocks]]
+id = "earnings-blackout"
+category = "precaution"
+order = 1
+name = "Earnings blackout"
+knobs = ["earnings_blackout"]
+does = "Refuses to sell a put if the company reports earnings before that put expires."
+why = """
+An earnings report is a scheduled jump. A 0.30-delta put is priced for ordinary
+day-to-day movement, not for a stock gapping 15% overnight — so you are taking a
+risk you were never paid for. Worse, the bot's own ranking actively hunts for
+volatile names, which is exactly the set with earnings coming.
+
+The interesting part is how long it did nothing. The flag existed, and turning it
+on changed nothing, because the calendar was never handed to the decision code:
+every stock came back "unknown", unknown is allowed through, and the gate
+reported itself ON while blocking nothing — silently, with no log line. Making it
+real took three separate changes, not one. The owner's call on 2026-08-09 was
+"a no-brainer to have it on", and it has been live since.
+"""
+watch_out = "It needs the earnings calendar files copied to the server. Both the loader and the guard now stop the run by name if they are missing, so the failure is a stopped bot rather than a quiet gate."
+[blocks.on_when]
+kind = "flag"
+knob = "earnings_blackout"
+
+[[blocks]]
+id = "yield-floor"
+category = "precaution"
+order = 2
+name = "Minimum yield on the cash"
+knobs = ["min_ann_yield_on_collateral"]
+does = "Refuses a trade whose premium is a trivial return on the cash the strike ties up."
+why = """
+Selling a put locks up cash — enough to buy the shares if you are assigned. The
+bot's original minimum was a flat $2.50 per contract, which is blind to how much
+cash is being locked. So a $1,000-strike put, tying up $100,000 for 11 days,
+passed on $2.50. That works out to about 0.33% a year against a measured median
+of roughly 31% for an ordinary 11-day put at this delta.
+
+The floor is 8% annualised. Measured medians from 2024-01 to 2026-07 are 18.3%,
+30.9% and 45.6% at 0.20, 0.30 and 0.40 delta, and the least generous real name
+in the universe (XLU) is 8.4% — so this is a junk filter that almost nothing
+real trips, not a dial to tune.
+"""
+watch_out = "It was in the engine from commit 682823e but not in the live config until 2026-08-06, so the bot ran without it while the status note said the work was done. That gap is why `bench promote` exists."
+[blocks.on_when]
+kind = "any_set"
+
+[[blocks]]
+id = "slot-notional-cap"
+category = "precaution"
+order = 4
+name = "Slot concentration cap"
+knobs = ["slot_notional_cap_mult"]
+does = "Refuses an entry whose single contract ties up more cash than its slot's fair share of the account, times this multiple."
+why = """
+The account splits its free cash equally across the empty slots, but when
+nothing is affordable at that split, a fallback (A12, owner 2026-08-01) lets
+the best-ranked name concentrate: the whole free balance may back one
+contract, because an idle slot was measured to cost more than a concentrated
+one. That fallback is unbounded, and the batch-2 grid priced the consequence:
+the 10 worst campaigns across 28 cells are all the same shape — one
+high-priced name takes a multiple of its slot's share, then sits marked down
+for months while the slot can do nothing else.
+
+The cap bounds the fallback instead of deleting it: an entry whose single
+contract (strike x 100) exceeds this multiple of the equal-split budget is
+refused under its own name (entry_gated_notional), and the next-ranked name
+is tried — the same promote-the-next discipline as every other entry gate.
+At 1.25x, a $20k slot may stretch to a $25k contract and no further.
+
+Referenced to the EQUAL split deliberately: a cap referenced to the
+fallback's own concentrated budget would grow exactly when it is supposed to
+bind, and never bind.
+"""
+watch_out = "The cap can only idle a slot when NOTHING in the pool fits under it — a session like that prints entry_gated_notional and an idle slot together, which is the cap working, not a defect. Judge it on maxDD and worst-year against the return given up, per the batch-3 bar."
+[blocks.on_when]
+kind = "any_set"
+
+[[blocks]]
+id = "intrinsic-filter"
+category = "precaution"
+order = 3
+name = "Not-really-premium filter"
+knobs = ["max_credit_pct_of_strike"]
+does = "Refuses a put whose premium is a large slice of the strike price."
+why = """
+If a put pays you 37% of the strike, you are not being paid to take a risk — you
+are buying the stock at a discount and calling the discount "premium". The
+assignment is close to certain and already priced in. The wheel is supposed to be
+paid for taking assignment RISK; here there is no risk, just a purchase in
+disguise.
+
+The measurement is stark. On the 2.53-year $500k run, only 2 of 299 entries
+exceeded 3% of strike — NOK at 37.2% and HL at 9.4% — and those two carried
+-$47,150 of the -$64,650 total loss on the share side. That is 73% of the damage
+from 0.7% of the trades. The median entry is 0.52% of strike, so a 3% cap barely
+touches normal trading.
+"""
+watch_out = ""
+[blocks.on_when]
+kind = "any_set"
+
+# ---------------------------------------------------------------------------
+# LIQUIDITY
+# ---------------------------------------------------------------------------
+
+[[blocks]]
+id = "liquidity-floors"
+category = "liquidity"
+order = 1
+name = "Liquidity floors"
+knobs = ["liq_max_rel_spread", "liq_min_open_interest", "liq_min_volume"]
+does = "Refuses contracts that barely trade, so the bot does not book profits from fills that could never have happened."
+why = """
+A backtest will happily fill you at the quoted price on a contract nobody trades.
+Real money will not. The review that prompted this found the ungated bot asking
+for 757 contracts of a name that trades about 84 a day — a fill that exists only
+in the spreadsheet. Applied to real history, the floors would have refused 114 of
+145 entries. Those are fills that could not have happened, not profit lost.
+
+The live floors are open interest of at least 250 and volume of at least 25.
+A third leg — a ceiling on the bid-ask spread — was turned OFF on 2026-08-11
+after being measured on the bot's own chains, and the reason is worth reading
+twice. Option prices move in 1-cent steps, so a $0.10 option has a 10%-of-mid
+spread no matter how liquid it is. The gate was therefore refusing contracts for
+being CHEAP, not for being illiquid, and this strategy sells cheap short-dated
+puts. It refused 25 of 27 perfectly good names; WBD, with 6,798 open interest and
+113 traded, was thrown out, while CCL passed only because its premium happened to
+be expensive enough in cents.
+"""
+watch_out = "With a floor set, a MISSING data field counts as a refusal — so a gap in the data quietly becomes a change in trading. The bench measures and reports this on every run."
+[blocks.on_when]
+kind = "any_set"
+
+[[blocks]]
+id = "order-size-cap"
+category = "liquidity"
+order = 2
+name = "Order size cap"
+knobs = ["liq_max_pct_of_open_interest", "liq_max_pct_of_volume"]
+does = "Shrinks an order that is too large for the contract's real trading volume, instead of refusing the trade."
+why = """
+The floors above ask "is this contract liquid?" but never "is this ORDER too big
+for it?" — they have no idea how many contracts are being bought. The 757-vs-84
+case was always a RATIO problem, and an absolute floor cannot express a ratio.
+
+These two cap the order at 10% of open interest and 25% of daily volume. The key
+design choice is that they write the order SMALLER rather than rejecting the
+name, because rejecting leaves the slot empty and idle slots are the failure the
+rest of the engine spends its time fighting. Only when the cap falls below a
+single contract does it refuse.
+
+Because it scales with order size, it binds differently per account: measured on
+2026-08-10, the $5k and $50k accounts were unaffected (they cannot afford enough
+to matter), $100k bound on 3 of 7 names, and $500k on 6 of 7 — which is exactly
+where the unfillable-order risk actually lived.
+"""
+watch_out = "Marked PROVISIONAL in the live config — no backtest had been run under these caps when they were switched on."
+[blocks.on_when]
+kind = "any_set"
+
+# ---------------------------------------------------------------------------
+# EXIT
+# ---------------------------------------------------------------------------
+
+[[blocks]]
+id = "covered-call"
+category = "exit"
+order = 1
+name = "Covered call, never below cost"
+knobs = ["call_delta", "call_min_strike"]
+does = "After the bot is assigned shares, it sells a call against them — but never at a strike below what it paid."
+why = """
+This is the second half of the wheel. You were assigned the stock; now you get
+paid to wait, and if the stock recovers you are called away at a profit and the
+cycle restarts. The call delta is 0.50, higher than the put's 0.30, because the
+call's job is to get the shares taken away rather than to milk premium.
+
+The floor rule — never write a call below your cost — is there so the bot cannot
+lock in a loss on the shares. It is obviously right, and it is also the trap.
+When a stock crashes, there IS no strike at or above your cost worth selling, so
+no call gets written, and the position just sits there. Measured across 530
+tickers over four years at five slots: 1,347 of 5,205 slot-days held shares with
+no call against them at all. The safety rule and the jam are the same rule.
+"""
+watch_out = ""
+[blocks.on_when]
+kind = "always"
+
+[[blocks]]
+id = "calls-run-to-expiry"
+category = "exit"
+order = 2
+name = "Covered calls run to expiry"
+knobs = ["call_take_profit_pct"]
+does = "Holds a covered call to its expiry date instead of buying it back early once most of its value is gone."
+why = """
+The take-profit rule in ENTRY governs BOTH legs. On a put that is right: closing
+early banks the gain and frees the slot. On a covered call it is backwards — it
+buys back the hedge and LEAVES YOU HOLDING THE STOCK, which is the opposite of
+what the call is there to do after an assignment.
+
+Worse, it fires at the wrong moment by construction. A call only becomes cheap
+to buy back because the stock FELL: 147 of 149 buy-backs in the five-year trade
+log happened with the price below the assignment strike, median 9.8% below. And
+a price below the assignment strike is exactly what puts the next writable
+strike underneath the never-below-cost floor. So the profit-taking rule is
+accidentally a "the stock just dropped" alarm that fires at the one moment the
+other rules make re-writing impossible. Two thirds of those buy-backs were
+followed by no new call at all before the original expiry, and 94% of the calls
+bought back would have expired worthless if simply held.
+
+Holding to expiry removes that. The call survives to settlement, and settlement
+is the only thing that ever takes assigned shares off the book.
+"""
+watch_out = "Only safe with the tp-independent write floor (fills.write_credit_ok, 2026-08-16). At >= 1.0 the take-profit guard goes silent, and on the call leg — exempt from the liquidity gate — it was the ONLY minimum-credit rule; without the floor this writes $0.00 calls at a guaranteed loss."
+[blocks.on_when]
+kind = "any_set"
+
+[[blocks]]
+id = "assigned-stock-exit"
+category = "exit"
+order = 3
+name = "The three-tier exit ladder"
+knobs = ["assignment_exit", "exit_trigger", "exit_trigger_pct", "exit_trigger_days", "exit_call_delta", "exit_stop", "exit_stop_buffer", "exit_cooldown_days"]
+does = "Gives assigned shares a way out when no covered call above cost is possible, ending in selling the stock."
+why = """
+Before this, the bot had NO exit. Once assigned, the only door was a covered
+call, and the never-below-cost rule forbids writing one on a crashed name — so
+nothing ever sold shares. That is the jam described in the block above, and this
+is the fix.
+
+Three steps. Tier 1 is normal: the cost floor holds, write an ordinary call.
+Tier 2 fires when tier 1 is impossible: write a call deep in the money, which
+pays more and is far likelier to take the shares away. Tier 3 fires when the
+price falls below even that strike: close the call, THEN sell the stock.
+
+Two details that matter. It never goes naked — if the call cannot be bought back,
+the share sale is REFUSED, because the account has no margin and an uncovered
+call is unlimited risk; a stuck slot for one more day is merely the problem we
+already have. And tier 3 triggers on the share price, never on how much the call
+has lost, because a call decays toward zero on a flat stock anyway, so a
+"call lost 40%" rule would dump healthy positions and fire more the longer you
+held.
+
+The triggers are deliberately "the previous step failed" rather than tuned
+numbers: 31 assignments is nowhere near enough data to fit thresholds on, so
+every threshold not introduced is a real gain.
+"""
+watch_out = "New and switched off. This is the block to test first — the jam it fixes is measured and large."
+[blocks.on_when]
+kind = "flag"
+knob = "assignment_exit"
+
+[[blocks]]
+id = "put-stop"
+category = "exit"
+order = 4
+name = "Stop-loss on the put"
+knobs = ["put_stop_mult"]
+does = "Buys the put back at a loss once it has moved against the bot by a multiple of the credit it collected."
+why = """
+The conventional answer to a losing short put: cut it rather than take the
+shares. It was tested on 2026-07-14 and falsified at every threshold — cutting
+the loss also cut off the recovery that the wheel's whole design depends on,
+since taking assignment and selling calls is the plan, not the accident.
+"""
+watch_out = "The live bot cannot run this — the portfolio engine refuses it by name as a single-stock-only mechanic."
+[blocks.on_when]
+kind = "any_set"
+
+[[blocks]]
+id = "roll-tested-puts"
+category = "exit"
+order = 5
+name = "Roll a losing put"
+knobs = ["roll_tested_puts"]
+does = "Pushes a put that has gone against it out to a later expiry, collecting more premium instead of taking assignment."
+why = """
+Buying time rather than taking the shares. Only allowed when the roll brings in
+MORE money than it costs to close the old position, and capped at two rolls per
+position — after that the normal path applies and the shares get assigned.
+The cap exists because rolling forever is how a small loss becomes a permanent
+one wearing a disguise.
+"""
+watch_out = "The live bot cannot run this — the portfolio engine refuses it by name as a single-stock-only mechanic."
+[blocks.on_when]
+kind = "flag"
+knob = "roll_tested_puts"
+
+[[blocks]]
+id = "liquidate-on-assignment"
+category = "exit"
+order = 6
+name = "Dump the shares immediately"
+knobs = ["liquidate_assignment"]
+does = "Takes the assignment and sells every share the same day, then goes straight back to selling puts."
+why = """
+The blunt alternative to the three-tier ladder: never hold stock at all, take the
+loss immediately, and get the slot back. It converts the wheel into a pure
+premium-selling strategy that occasionally pays a fee for being wrong.
+
+It is mutually exclusive with the never-below-cost call floor, and the engine
+refuses the combination outright — if you never hold shares, a rule about which
+calls to write against held shares is meaningless.
+"""
+watch_out = "The live bot cannot run this — the portfolio engine refuses it by name as a single-stock-only mechanic."
+[blocks.on_when]
+kind = "flag"
+knob = "liquidate_assignment"
+
+[[blocks]]
+id = "exit-impact-slippage"
+category = "exit"
+order = 7
+name = "Exit legs pay for their size"
+knobs = ["exit_impact_max_spreads"]
+does = "Charges extra slippage on a covered-call sale or a put buyback when the order is large relative to that day's open interest or volume, instead of pricing it at the clean quote."
+why = """
+A covered call is exempt from the liquidity floor (refusing one leaves shares
+naked) and a put buyback can never be refused (you already hold the position) —
+so unlike a new entry, neither leg has ever had a way to say "this fill is not
+realistic." Measured on the promoted config's own fill log: a covered call sold
+at 110% of that day's open interest, another at 2,100% of that day's volume, 16
+of 98 call fills on a strike with zero volume printed that day.
+
+Reuses the SAME ratio the entry side already caps (10% of open interest, 25% of
+volume) rather than inventing a new number. An order inside that ratio costs
+nothing extra; each full multiple past it costs one more bid-ask spread, capped
+so an unmeasurable or zero-volume day prices as expensive rather than infinite.
+"""
+watch_out = "PROVISIONAL — no backtest has run under this yet. Off by default (None); turning it on only changes the PRICE of an exit fill, never whether it happens."
+[blocks.on_when]
+kind = "flag"
+knob = "exit_impact_max_spreads"
+
+# ---------------------------------------------------------------------------
+# COSTS
+# ---------------------------------------------------------------------------
+
+[[blocks]]
+id = "trading-costs"
+category = "cost"
+order = 1
+name = "What a fill costs"
+knobs = ["commission_per_contract", "fees_per_contract", "fee_per_assignment"]
+does = "Charges the broker commission and exchange fees on every contract traded, each way."
+why = """
+$0.65 commission plus $0.05 of pass-through fees, per contract, per side. Tiny
+numbers that decide whether short-dated trades are worth doing at all: on a put
+that pays $0.30, the round trip is nearly half the credit.
+
+The detail that matters more than the values is that ONE number is used
+everywhere. The code that books the fill and the code that decides whether a
+trade's exit is even reachable both charge the same figure. If they disagreed,
+the bot would either write exits that are guaranteed losses or refuse trades it
+could actually survive.
+
+The engine's own defaults are zero, so every historical backtest stays
+comparable; the real costs are switched on only in the live config.
+"""
+watch_out = "The $0.05 is PROVISIONAL until checked against a real Schwab statement, and the $0 assignment fee is marked VERIFY."
+[blocks.on_when]
+kind = "always"
+
+# ---------------------------------------------------------------------------
+# ACCOUNT
+# ---------------------------------------------------------------------------
+
+[[blocks]]
+id = "account"
+category = "setup"
+order = 1
+name = "The account"
+knobs = ["starting_capital", "ticker", "contract_multiplier", "cash_yield"]
+does = "How much cash the account starts with, and what idle cash earns while it waits."
+why = """
+Not strategy — the container the strategy runs in. One contract covers 100
+shares, which is why a $50 stock needs $5,000 of collateral per put.
+
+Idle cash earns 0%, and that is a settled decision rather than an oversight: the
+uninvested collateral is treated as earning nothing, and that rate is never to be
+used as a hurdle the strategy has to beat.
+
+The live bot runs 25 accounts at once — five capital levels crossed with five
+slot counts — so starting capital is a per-account fact, not one global number.
+"""
+watch_out = ""
+[blocks.on_when]
+kind = "always"

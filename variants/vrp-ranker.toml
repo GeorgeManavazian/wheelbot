@@ -1,0 +1,152 @@
+name = "vrp-ranker"
+question = "When more names pass the gates than there are slots, does choosing the one paid MOST per unit of the risk it carries beat choosing the jumpiest one?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-17"
+updated = "2026-08-17"
+verdict = """
+REJECTED 2026-08-17, on its own pre-registered bar, and the declared risk is
+exactly the one that killed it.
+
+Live tier, n_slots=5, engine 3e814d834e75 clean, against the config promoted
+the same day:
+
+    ret/maxDD          1.029 -> -0.255
+    total return      +22.9% ->  -6.4%
+    campaigns            142 ->    100
+    days_uncovered       641 ->    894
+    assignment rate    0.197 ->  0.250
+    $/slot-day clean  $35.93 -> $30.99
+    $/slot-day assigned $11.77 -> $6.06
+
+THE MECHANISM WORKED. `entry_ranked_vrp_unknown` is ZERO -- every candidate had
+a measurable implied vol, so the sort never degenerated to universe order,
+which was the failure the capability guard exists to prevent and the first
+thing the bar required checking. The ranker did what it was built to do. It
+just did not pay.
+
+THE DECLARED RISK IS WHAT HAPPENED. The variant said before the run: "a pure
+VRP sort prefers calm names -- top-5-by-VRP has a median realized vol of 0.204
+against the live ranker's 0.400. Calm names pay thin credits, into a $2.50
+absolute minimum and $0.70 per contract per side of friction... if this arm
+wins on ranking and loses on premium size, `pnl_per_slotday_clean` is where it
+will show." That is precisely the shape of the result: campaigns fell 142 ->
+100 because the calm names it prefers cannot clear the 8% collateral-yield
+floor often enough, and the earnings per slot-day fell with them. The bar said
+campaigns must not fall below 142 and ret/maxDD must improve on 1.029. Both
+failed, and by wide margins.
+
+WHAT SURVIVES, AND IT IS NOT NOTHING. The decile table is a measurement, not an
+inference, and it stands: over 10,528 gate-passing ticker-days, IV over
+trailing realized vol runs 1.620 / 1.332 / 1.237 / 1.136 / 1.088 / 0.998 from
+the calmest realized-vol decile to the jumpiest, monotone at every step, and
+the live ranker's picks have a median of 1.098 against a pool median of 1.226.
+The bot IS systematically the buyer of the worst-priced risk in its candidate
+set. What this run falsifies is the trade built on that fact, not the fact.
+
+WHY THE FACT DOES NOT CASH. Two candidate explanations, and this run cannot
+separate them:
+  (1) The ratio is IV over TRAILING realized vol. After a vol spike, trailing
+      RV is high and lower forward IV is CORRECT, so a chunk of the monotone
+      slope is honest mean reversion rather than mispricing -- the weakness
+      declared in the variant before it ran.
+  (2) Gross premium matters more than premium-per-unit-risk when there is a
+      $2.50 floor and $0.70 a side of friction. The edge per dollar may be
+      better on calm names while the edge per SLOT is worse, and the wheel is
+      constrained by slots.
+(2) is the more likely reading, because the damage shows up in campaign count
+and dollars per slot-day rather than in the quality of the campaigns taken.
+
+WHAT WOULD BE WORTH TRYING, AND IS NOT BEING TRIED ON THIS EVIDENCE: a BLENDED
+key -- rank on VRP among names whose credit clears a real premium floor, rather
+than on VRP alone. That is a different arm with a different bar, and it should
+not be built off the back of a rejected one without its own case.
+"""
+note = """
+THE CHARGE. `chain.py:43` loads `iv` on every contract and nothing ever reads
+it. The bot picks between candidates on `vol_pctile` -- how volatile this name
+is FOR ITSELF -- which measures the risk it is about to take and never the
+price it is being paid for taking it.
+
+A short put earns `IV - future realized vol`. That spread is the entire edge.
+Measured over 10,528 gate-passing ticker-days on the live window, IV over
+trailing realized vol, by realized-vol decile:
+
+    decile      1      3      5      7      9     10
+    realized  0.130  0.187  0.233  0.283  0.384  0.533
+    IV / RV   1.620  1.332  1.237  1.136  1.088  0.998
+
+Monotone at every step. The calmest decile is paid 62% more than the volatility
+it delivers; the jumpiest is paid 0.998 -- exactly what it delivers, which is
+nothing. `rank_by="vol_pctile"` sorts to the top of that table by realized vol,
+and what it actually picks has a median IV/RV of 1.098 against a pool median of
+1.226. The bot is systematically the buyer of the worst-priced risk in its own
+candidate set. Ranking by VRP instead, the same pool, same sessions, yields a
+median of 1.845.
+
+WHY THIS IS NOT `iv-ranker`, WHICH LOST. `rank_by="iv_rank"` scored Sharpe
+-0.32 and `min_iv_rank` as a veto cost 18 points of return on 2026-08-04. IV
+RANK is the level of implied vol against its own past; it is confounded with
+the level of RISK, because a name whose IV is high is usually a name whose
+realized vol is high too. The decile table above is the proof they are
+different statistics: if IV rank and VRP measured the same thing, that column
+would be flat. This ranks the SPREAD.
+
+A SORT, NEVER A VETO -- and the reason is a weakness in the statistic, stated
+plainly. IV is forward-looking; the realized vol it is divided by is TRAILING.
+After a volatility spike, trailing RV is high and a lower forward IV is
+CORRECT rather than cheap, so some of that monotone slope is honest mean
+reversion and not mispricing. A reordering that is partly right still helps.
+A refusal that is partly wrong costs campaigns, and this project has measured
+what refusing campaigns costs: 18 points.
+
+DECLARED RISK: THE PREMIUM FLOOR. A pure VRP sort prefers calm names -- the
+top-5-by-VRP selection has a median realized vol of 0.204 against the live
+ranker's 0.400. Calm names pay thin credits, into a $2.50 absolute minimum and
+$0.70 per contract per side of friction. The bot may end up trading names whose
+premium does not clear its own costs. Two things bound it: the 8% annualised
+collateral-yield floor is already on and refuses the worst of that, and
+`pnl_per_slotday_clean` is on the scorecard to catch it if the floor is not
+enough. If this arm wins on ranking and loses on premium size, that number is
+where it will show, and the answer would be a blended key rather than this one.
+
+THE BAR, DECLARED BEFORE THE RUN.
+  MECHANISM (the arm must actually change the book, or the rest is noise):
+    * the set of names traded must differ materially from the base -- if the
+      two rankers pick the same book, the statistic is not doing anything
+    * entry_ranked_vrp_unknown must be a small share of the pool. If most
+      names rank NEUTRAL the sort has degenerated to universe order, and every
+      number in the run is meaningless. This is the failure mode the capability
+      guard exists to prevent and it must be checked in the output, not assumed.
+  OUTCOME:
+    * campaigns must not fall below the base's 142 -- a ranker that wins by
+      trading less is the veto failure in disguise
+    * ret_per_maxdd must improve on 1.029
+    * pnl_per_slotday_clean must not fall below 90% of $35.93, which is the
+      premium-floor risk above made into a number
+  NOT SUFFICIENT: total return alone. The liquidity ladder run on 2026-08-16
+    came back non-monotone on ret_per_maxdd across three rungs, so a single
+    window's return difference on this bot is not evidence of mechanism.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.rank_by]
+value = "vrp"
+why = """
+Rank the pool by implied vol over trailing realized vol -- the price paid for
+risk against the risk itself -- instead of by realized-vol percentile, which
+reads the risk and never the price.
+
+Reorders the pool; it never removes a member. Unmeasurable names sort NEUTRAL
+at 1.0, which is fair value on this ratio rather than the midpoint of a
+percentile -- see src/engine_v2/options/vrp.py, where the constant is
+deliberately NOT iv_rank's 0.5.
+
+The engine refuses to run this without an IV history, in both the batch driver
+and step_one_day, because with no history every name scores NEUTRAL and the
+sort silently degrades to universe order while still printing a full plausible
+set of trades.
+"""
+source = "IV/RV decile table, 10,528 gate-passing ticker-days, live window"

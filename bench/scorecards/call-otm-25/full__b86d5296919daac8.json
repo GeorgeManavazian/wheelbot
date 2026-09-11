@@ -1,0 +1,163 @@
+{
+ "variant": "call-otm-25",
+ "base": "frozen",
+ "tier": "full",
+ "is_evidence": true,
+ "created": "2026-08-16T20:05:01+00:00",
+ "arms": {
+  "variant": {
+   "total_return": -0.024469992308392197,
+   "cagr": -0.0061319971942495055,
+   "sharpe": 0.059136871958485125,
+   "max_drawdown": -0.22396574540859093,
+   "ret_per_maxdd": -0.10925774503485108,
+   "pnl": -2446.9992308392248,
+   "final_equity": 97553.00076916078,
+   "n_days": 1015,
+   "by_year": {
+    "2022": -0.12128199456062794,
+    "2023": 0.2670753998852955,
+    "2024": -0.009828241589974529,
+    "2025": -0.00905575393534297,
+    "2026": -0.10084594211371867
+   },
+   "worst_year": -0.12128199456062794,
+   "campaigns": 141,
+   "assignments": 36,
+   "assignment_rate": 0.2553191489361702,
+   "days_flat": 70,
+   "days_uncovered": 2573,
+   "n_trades": 760,
+   "n_warnings": 6039,
+   "warning_counts": {
+    "entry_gated_illiquid": 3303,
+    "call_gated_unclosable": 2293,
+    "covered_call_unreachable": 236,
+    "entry_gated_earnings": 125,
+    "entry_gated_intrinsic": 49,
+    "entry_gated_low_yield": 15,
+    "entry_gated_unclosable": 14,
+    "expiry_settled_reachback": 2,
+    "expiry_resolved_late": 2
+   },
+   "final_shares": {
+    "NKE": 400.0,
+    "CMG": 600.0,
+    "ABNB": 100.0,
+    "KWEB": 800.0,
+    "EQT": 400.0
+   },
+   "secs": 63.3
+  },
+  "base": {
+   "total_return": -0.06717498650893339,
+   "cagr": -0.017116341713651728,
+   "sharpe": -0.007460851476450436,
+   "max_drawdown": -0.2775303729627543,
+   "ret_per_maxdd": -0.2420455310595808,
+   "pnl": -6717.498650893336,
+   "final_equity": 93282.50134910666,
+   "n_days": 1015,
+   "by_year": {
+    "2022": -0.1203600133038304,
+    "2023": 0.17367423040473384,
+    "2024": 0.07776694124855843,
+    "2025": 0.062339908202601046,
+    "2026": -0.20396148432638106
+   },
+   "worst_year": -0.20396148432638106,
+   "campaigns": 158,
+   "assignments": 39,
+   "assignment_rate": 0.2468354430379747,
+   "days_flat": 70,
+   "days_uncovered": 2511,
+   "n_trades": 756,
+   "n_warnings": 6266,
+   "warning_counts": {
+    "entry_gated_illiquid": 3688,
+    "call_gated_unclosable": 2089,
+    "covered_call_unreachable": 280,
+    "entry_gated_earnings": 123,
+    "entry_gated_intrinsic": 53,
+    "entry_gated_unclosable": 14,
+    "entry_gated_low_yield": 13,
+    "expiry_settled_reachback": 3,
+    "expiry_resolved_late": 3
+   },
+   "final_shares": {
+    "NKE": 100.0,
+    "CMG": 800.0,
+    "SNAP": 3400.0,
+    "KWEB": 800.0,
+    "RMD": 100.0
+   },
+   "secs": 74.5
+  }
+ },
+ "provenance": {
+  "engine": {
+   "sha": "92e534bff8c2",
+   "branch": "feat/ticker-dossiers",
+   "dirty": true,
+   "dirty_files": [
+    "ench/tests/test_bench_blocks.py"
+   ]
+  },
+  "config_hash": {
+   "variant": "b86d5296919daac8",
+   "base": "3f779976c6bd9b8e"
+  },
+  "data": {
+   "hash": "b702e8f0548b8fcb",
+   "n_files": 52403,
+   "bytes": 7270004824,
+   "n_tickers": 529,
+   "stores": [
+    "data/options/chains",
+    "data/options/open_interest"
+   ]
+  },
+  "env": {
+   "python": "3.12.13",
+   "pandas": "3.0.3",
+   "host": ""
+  }
+ },
+ "conditions": {
+  "start": "2022-06-01",
+  "end": "2026-07-01",
+  "n_slots": 5,
+  "capital": 100000.0,
+  "selector": "chop",
+  "max_dte": 15,
+  "n_tickers_requested": 531,
+  "n_tickers_loaded": 529,
+  "dropped": {
+   "no_chain": 1,
+   "no_closes": 0,
+   "no_state": 1
+  }
+ },
+ "divergences": [
+  "open_interest is present on 98.4% of chain rows (0 of 529 tickers have no column at all). liquidity_ok REFUSES when a threshold is set and the field is missing or NaN, so every one of the other 1.6% is barred from entry -- on data availability, not on liquidity. The OI store reaches near-full coverage only from 2024-08; the `live` tier starts there for this reason. Visible in the refusal counts as entry_gated_illiquid.",
+  "earnings calendar knows 528 of 529 universe names; the other 1 read as UNKNOWN and in_blackout ALLOWS on unknown. This is identical to what the live bot does with the same file, so it is faithful rather than a divergence -- but it is not full protection."
+ ],
+ "wall_secs": 137.848778963089,
+ "notes": "n_slots=5; exit matrix 2026-08-16, write-credit floor in place (ef822e8)",
+ "schema": 1,
+ "delta": {
+  "sharpe": 0.06659772343493556,
+  "ret_per_maxdd": 0.1327877860247297,
+  "total_return": 0.04270499420054119,
+  "cagr": 0.010984344519402223,
+  "max_drawdown": 0.05356462755416336,
+  "worst_year": 0.08267948976575312,
+  "pnl": 4270.499420054111,
+  "campaigns": -17.0,
+  "assignments": -3.0,
+  "assignment_rate": 0.008483705898195498,
+  "days_flat": 0.0,
+  "days_uncovered": 62.0,
+  "n_trades": 4.0
+ }
+}

@@ -1,0 +1,199 @@
+{
+ "variant": "frozen",
+ "base": "plain",
+ "tier": "smoke",
+ "is_evidence": false,
+ "created": "2026-08-25T23:28:44+00:00",
+ "arms": {
+  "variant": {
+   "total_return": 0.02942702858340751,
+   "cagr": 0.06122030654062849,
+   "sharpe": 0.4251133935170244,
+   "max_drawdown": -0.13035197856681457,
+   "ret_per_maxdd": 0.22575053257303712,
+   "pnl": 2942.702858340752,
+   "final_equity": 102942.70285834075,
+   "n_days": 123,
+   "by_year": {
+    "2025": 0.02942702858340751
+   },
+   "worst_year": 0.02942702858340751,
+   "campaigns": 6,
+   "assignments": 2,
+   "assignment_rate": 0.3333333333333333,
+   "shares_sold": 0,
+   "sold_per_assignment": 0.0,
+   "calls_written_below_basis": 0,
+   "campaigns_with_below_basis_call": 0,
+   "days_flat": 34,
+   "days_uncovered": 2,
+   "n_trades": 25,
+   "n_warnings": 27,
+   "warning_counts": {
+    "entry_gated_illiquid": 17,
+    "entry_gated_low_yield": 6,
+    "entry_gated_unclosable": 4
+   },
+   "final_shares": {
+    "DIA": 200.0
+   },
+   "idle_slot_days": 34,
+   "pool_starved_days": 34,
+   "pool_depth_mean": 0.3,
+   "pool_starved_pct": 0.85,
+   "scan_names_mean": 12.0,
+   "scan_no_chain_mean": 0.75,
+   "scan_weather_mean": 9.925,
+   "scan_no_contract_mean": 0.35,
+   "rank_viable_share_mean": 0.0,
+   "campaigns_open_at_end": 1,
+   "slotdays_occupied": 89,
+   "slotdays_assigned": 70,
+   "slotdays_assigned_pct": 0.7865168539325843,
+   "slot_fill_pct": 0.7235772357723578,
+   "campaigns_clean": 4,
+   "pnl_per_slotday_clean": 50.90000015058123,
+   "campaigns_assigned": 1,
+   "pnl_per_slotday_assigned": 11.061818427822436,
+   "secs": 0.4
+  },
+  "base": {
+   "total_return": 0.03533850007107864,
+   "cagr": 0.07374326565289824,
+   "sharpe": 0.46953483182753786,
+   "max_drawdown": -0.09167768507266838,
+   "ret_per_maxdd": 0.38546457671861534,
+   "pnl": 3533.8500071078597,
+   "final_equity": 103533.85000710786,
+   "n_days": 123,
+   "by_year": {
+    "2025": 0.03533850007107864
+   },
+   "worst_year": 0.03533850007107864,
+   "campaigns": 20,
+   "assignments": 0,
+   "assignment_rate": 0.0,
+   "shares_sold": 0,
+   "sold_per_assignment": null,
+   "calls_written_below_basis": 0,
+   "campaigns_with_below_basis_call": 0,
+   "days_flat": 52,
+   "days_uncovered": 0,
+   "n_trades": 39,
+   "n_warnings": 21,
+   "warning_counts": {
+    "entry_gated_unclosable": 21
+   },
+   "final_shares": {},
+   "idle_slot_days": 52,
+   "pool_starved_days": 52,
+   "pool_depth_mean": 0.9722222222222222,
+   "pool_starved_pct": 0.7222222222222222,
+   "scan_names_mean": 12.0,
+   "scan_no_chain_mean": 1.0,
+   "scan_weather_mean": 9.527777777777779,
+   "scan_no_contract_mean": 0.20833333333333334,
+   "rank_viable_share_mean": 0.0,
+   "campaigns_open_at_end": 1,
+   "slotdays_occupied": 71,
+   "slotdays_assigned": 0,
+   "slotdays_assigned_pct": 0.0,
+   "slot_fill_pct": 0.5772357723577236,
+   "campaigns_clean": 19,
+   "pnl_per_slotday_clean": 49.900724630122724,
+   "campaigns_assigned": 0,
+   "pnl_per_slotday_assigned": null,
+   "secs": 0.5
+  },
+  "spy_buy_hold": {
+   "total_return": 0.05646209633278598,
+   "cagr": 0.11910657165049154,
+   "sharpe": 0.565253202667922,
+   "max_drawdown": -0.18998906889856904,
+   "ret_per_maxdd": 0.29718602580725234,
+   "pnl": 5646.209633278602,
+   "final_equity": 105646.2096332786,
+   "n_days": 123,
+   "by_year": {
+    "2025": 0.05646209633278598
+   },
+   "worst_year": 0.05646209633278598
+  }
+ },
+ "provenance": {
+  "engine": {
+   "sha": "7dd9641a5868",
+   "branch": "feat/ticker-dossiers",
+   "dirty": false,
+   "dirty_files": []
+  },
+  "config_hash": {
+   "variant": "76c904270c347994",
+   "base": "44136fa355b3678a"
+  },
+  "data": {
+   "hash": "7ddf3992dac40d44",
+   "n_files": 168,
+   "bytes": 88200582,
+   "n_tickers": 12,
+   "stores": [
+    "data/options/chains",
+    "data/options/open_interest"
+   ]
+  },
+  "env": {
+   "python": "3.12.13",
+   "pandas": "3.0.3",
+   "host": ""
+  }
+ },
+ "conditions": {
+  "start": "2025-01-01",
+  "end": "2025-07-01",
+  "n_slots": 1,
+  "capital": 100000.0,
+  "selector": "chop",
+  "max_dte": 15,
+  "n_tickers_requested": 12,
+  "n_tickers_loaded": 12,
+  "dropped": {
+   "no_chain": 0,
+   "no_closes": 0,
+   "no_state": 0
+  }
+ },
+ "divergences": [
+  "open_interest is present on 93.3% of chain rows (0 of 12 tickers have no column at all). liquidity_ok REFUSES when a threshold is set and the field is missing or NaN, so every one of the other 6.7% is barred from entry -- on data availability, not on liquidity. The OI store reaches near-full coverage only from 2024-08; the `live` tier starts there for this reason. Visible in the refusal counts as entry_gated_illiquid."
+ ],
+ "wall_secs": 0.8624756336212158,
+ "notes": "",
+ "schema": 2,
+ "delta": {
+  "sharpe": -0.044421438310513484,
+  "ret_per_maxdd": -0.15971404414557822,
+  "total_return": -0.005911471487671127,
+  "cagr": -0.01252295911226975,
+  "max_drawdown": -0.038674293494146195,
+  "worst_year": -0.005911471487671127,
+  "pnl": -591.1471487671079,
+  "campaigns": -14.0,
+  "assignments": 2.0,
+  "assignment_rate": 0.3333333333333333,
+  "days_flat": -18.0,
+  "days_uncovered": 2.0,
+  "n_trades": -14.0,
+  "shares_sold": 0.0,
+  "calls_written_below_basis": 0.0,
+  "campaigns_with_below_basis_call": 0.0,
+  "slot_fill_pct": 0.14634146341463417,
+  "slotdays_assigned_pct": 0.7865168539325843,
+  "pnl_per_slotday_clean": 0.9992755204585038,
+  "idle_slot_days": -18.0,
+  "pool_depth_mean": -0.6722222222222223,
+  "pool_starved_pct": 0.12777777777777777,
+  "scan_no_chain_mean": -0.25,
+  "scan_weather_mean": 0.39722222222222214,
+  "scan_no_contract_mean": 0.14166666666666664,
+  "rank_viable_share_mean": 0.0
+ }
+}

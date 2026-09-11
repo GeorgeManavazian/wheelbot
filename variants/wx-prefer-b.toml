@@ -1,0 +1,67 @@
+name = "wx-prefer-b"
+question = "Does putting half B at the front of the queue -- a sort preference, never a refusal -- capture the same signal as the half-B veto without ever leaving a slot idle?"
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C2 of the ten-candidate brief. THE VETO'S COUNTER-ARGUMENT, RUN AS ITS OWN ARM.
+
+Every entry veto this project has measured has been starved by slot width. The
+canonical case is `min_iv_rank` (2026-08-04): the signal was real -- P&L per
+campaign rose about 14% -- and it HALVED the campaign count and cost 18 points of
+total return, +43.0% to +24.9%, with Sharpe down 0.26. The wheel's return comes
+from capital turnover, so anything that halves trade count has to clear a bar a
+14% per-trade improvement does not come close to.
+
+A PREFERENCE cannot do that. It reorders the pool and never removes a member, so
+a session on which only half A is available fills its slots exactly as today.
+The most this can cost is picking a slightly worse name; the most a veto can cost
+is an empty slot.
+
+WHAT WOULD MAKE THIS INDISTINGUISHABLE FROM THE VETO, and it is the honest
+counter: with ~36 candidates passing the gate per session and 5 slots, half B
+alone supplies ~8.9 per session (measured 2026-08-15) -- more than enough to fill
+the book on most days. If B is nearly always available, "prefer B" and "only B"
+select the same names and this is a more complicated way to buy the same thing.
+The two arms are therefore run TOGETHER on purpose: the interesting outcome is
+where they DISAGREE, which is exactly the sessions that decide whether the veto's
+starvation risk is real.
+
+PRE-DECLARED PREDICTION, so agreement is not read as confirmation: entry count
+here must be >= the base arm's, because a pure reordering cannot remove a
+candidate. A run that shows fewer entries than `frozen` is a bug in the sort, not
+a finding, and `test_a_preference_never_reduces_the_campaign_count` pins that.
+
+WHY `n_slots = 5` AND NOT THE OWNER'S 1. A preference is invisible at one slot in
+the only way that matters: with a single slot the sort only ever picks the top
+name, so "never leaves a slot idle" -- the entire claim -- cannot be observed.
+Both arms share the setting; comparability with the existing n=1 corpus is the
+declared cost.
+
+PASS/FAIL, declared before the run. PASS only if it improves ret/DD AND does not
+reduce entry count. Judge it against `wx-half-b` on the same window: if the veto
+wins on P&L while this wins on entries, the report is that trade-off, not a
+single winner.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.prefer_chop_half]
+value = "B"
+why = """
+Sort half B ahead of half A when more candidates pass than there are slots,
+keeping the existing realized-vol-percentile order INSIDE each half so the
+change is one clean reordering rather than two.
+
+"B" for the same measured reason as `wx-half-b`: 12.9% assigned against 22.3%,
+$346 a campaign against $56, none of the six losers. The difference is the
+instrument, not the signal -- and the instrument is the thing this project has
+repeatedly got wrong (`min_iv_rank`, measured and rejected as a veto on
+2026-08-04 with the note that "the signal is real; the veto is the wrong
+instrument").
+"""
+since = "2026-08-15"
+source = "2026-08-05 -- IV rank as a ranking key, starved by slot width"

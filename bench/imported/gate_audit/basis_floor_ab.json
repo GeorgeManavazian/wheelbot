@@ -1,0 +1,28 @@
+[
+ {
+  "label": "basis floor ON (live)",
+  "total": 0.13930200400223214,
+  "sharpe": 0.30137517772667155,
+  "maxdd": -0.22049372414646906,
+  "campaigns": 175,
+  "uncovered": 1347,
+  "a3b": 1047,
+  "floor_unreach": 258,
+  "assigned": 31,
+  "called": 27,
+  "slot_days": 5205
+ },
+ {
+  "label": "basis floor OFF",
+  "total": 0.12886600359148548,
+  "sharpe": 0.3779282545145901,
+  "maxdd": -0.12095129078039002,
+  "campaigns": 300,
+  "uncovered": 158,
+  "a3b": 8,
+  "floor_unreach": 0,
+  "assigned": 58,
+  "called": 56,
+  "slot_days": 5205
+ }
+]

@@ -1,0 +1,115 @@
+name = "spine-d20-t7-p50"
+question = "Spine cell (0.2, 7, 0.5): what does this corner of the put-leg economics surface -- put_delta 0.2, target_dte 7, take-profit 0.5 -- do against SPY and against the anchor spine, under the carried (frozen) exit?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-17"
+updated = "2026-08-18"
+touches = ["entry"]
+verdict = """
+REJECTED (family verdict) -- 2026-08-18, Analyzer, batch-2 grid grading (NULL certification, spine family). Verbatim:
+
+Below or within book-noise of the anchor with 800-880 uncovered days.
+"""
+note = """
+GATE-CAMPAIGN BATCH 2, WAVE A -- one cell of the pre-registered spine grid.
+
+PRE-REGISTRATION (verbatim source): vault note "10 Live Paper Bot/2026-08-17
+-- Batch 2 pre-registration, the spine grid.md", written before any cell ran
+and before Wave-1 results were known. This cell is spine-d20-t7-p50: put_delta 0.2,
+target_dte 7, take_profit_pct 0.5. Naming grid: spine-d{15|20|30|40}-
+t{7|11|21}-p{50|60|90}; 27-cell factorial minus the anchor (0.30, 11,
+0.60) -- which is the live frozen spine, anchored by the fresh Wave-0
+capacity-baseline card -- plus two 0.40 bracket cells.
+
+CARRIED EXIT (section 0, branch c, decided by Wave-1 grading): current frozen
+EXACTLY as-is -- call_delta 0.50, call_min_strike "basis",
+call_take_profit_pct 1.0; jam = 641 days_uncovered on the anchor, known and
+bounded. Call side frozen across the grid; rank_by stays vol_pctile. The grid
+is an entry-economics surface and nothing else, or its cells are not
+attributable. Every cell reports days_uncovered; after Wave A the Analyzer
+computes across-cell rho(days_uncovered, cell P&L); if |rho| > 0.5 the
+surface is declared partly exit-shaped and only the put_delta marginal may
+absorb that variance in interpretation.
+
+REGISTERED DIRECTIONAL PREDICTIONS (section 2; these outrank sweep finds):
+  1. put_delta: ret/DD improves 0.30 -> 0.20; raw return declines at 0.15.
+     Falsifiable signature: 0.15 cells show an entry_gated_low_yield spike
+     plus a campaigns drop. No signature => floor-interaction model wrong.
+  2. tp: 0.50 >= 0.60 > 0.90 on ret/DD (turnover mechanism, deepened pool).
+  3. dte: weak around 11. Interaction: low delta wants longer DTE (credit
+     must clear absolute floors); predicted worst cell (0.15, 7, 0.90);
+     low-delta ridge runs toward 21.
+  4. Surface: ret/DD max near (0.20, 11, 0.50); raw-return max at the
+     leverage corner. A raw-return max anywhere else is a mechanism-relevant
+     surprise and gets a dedicated follow-up.
+
+THE BAR (section 3). S5/S20 = spy_total_return on the Wave-0 n5/n20 base
+cards (S5 = +37.34%; same window 2024-08-01 -> 2026-07-01). Year-buckets
+2024 (5 mo) / 2025 (12) / 2026 (6). Noise band 10pp (C3).
+
+  CELL WIN CANDIDATE (campaign-DONE shape), ALL of:
+    * total_return >= S5 at n5 AND >= S20 at n20
+    * beats SPY in >= 2 of 3 year-buckets INCLUDING at least one of
+      {2024, 2026} (base is 2025-carried; a 2025-only win is the excluded
+      single-year shape)
+    * put_delta > 0.30 cells only: Sharpe >= anchor-cell Sharpe AND ret/DD
+      >= anchor ret/DD (leverage guard; a 0.40 cell failing this is
+      "surface bracket, unshippable" whatever its return)
+    * neighbor coherence (3D dial-not-spike): every axis-adjacent neighbor
+      within 15pp or on a monotone path toward the cell; a cell with all
+      neighbors >= 15pp worse is a spike and dies
+    * diagnostics sane: days_uncovered in the carried exit's Batch-1 range;
+      assignment_rate consistent with the measured delta ladder.
+  Any WIN candidate is sweep-found by construction -> seductive-answer
+  treatment: one adversarial replication (n20 + trade-log re-read for
+  single-name carry -- the NIO check) before it reaches the owner.
+
+  NULL / EXHAUSTION (numerically): max over 29 cells of n5 total_return
+  < S5, AND top-3 cells by raw return re-run at n20 all < S20, AND axis
+  marginals reported. Scope: closes the SPINE family only -- put_delta
+  0.15-0.40 x DTE 7-21 x put TP 0.50-0.90, under the carried exit,
+  vol_pctile selection, 531 names, 2024-08 -> 2026-07, both widths.
+  INDETERMINATE ZONE: best cell in [S5 - 10pp, S5) -> not certified dead on
+  n5 alone; verdict from its n20 + year-buckets.
+
+AMENDMENTS (orchestrator 2026-08-17, logged as amendments per the
+pre-registration's own rule):
+  A-1: cell-vs-anchor deltas < 8pp are within open-book noise (the base's
+       loss side is 4 open positions; dodging one swings 5-8pp) unless both
+       widths + >= 2/3 year-buckets agree; report final_shares count +
+       days_uncovered per cell.
+  A-2: after Wave A, n20 confirms are MANDATORY for the top-3 cells by
+       total_return even if none pass at n5 (registered: if the best cell's
+       n20 total < +10%, the grid cannot reach done regardless of n5).
+
+MULTIPLE COMPARISONS (section 5): ~88 measured arms after this batch; at 29
+cells, 1-2 clear any p~0.05 threshold by luck, so NO SINGLE CELL IS A
+RESULT. Units of inference: (i) axis marginals + interaction signs vs the
+registered predictions; (ii) cells surviving the complete section-3 stack at
+both widths with neighbor coherence. Everything else is surface description.
+Grid winners are labeled sweep-found; hairs (within 2pp of S, or one bucket
+short) are reported as hairs. Killed-stays-killed review: all 29 cells are
+first honest measurements (iv-ranker-* sweeps ran under rank_by=iv_rank,
+archived, not evidence; dte-7's card is smoke-only; the old 0.40/7 corner
+was never measured under live gates with honest data).
+"""
+
+[ops]
+# Grid-wide width. The shared [ops] is n_slots = 1; every batch-1/2 claim is
+# stated at n=5 ($20k/slot). n20 confirms are paired -n20 clones (Wave B).
+n_slots = 5
+
+[knobs.put_delta]
+value = 0.2
+why = """The measured big step: -5.2pp assignment rate, p=0.037, predicted before the run that measured it. 0.25 is omitted from the grid deliberately -- measured to buy nothing (-1.2pp, p=0.66); the saving is all in 0.25 -> 0.20."""
+source = "Batch-2 pre-registration section 1 (2026-08-17)"
+
+[knobs.target_dte]
+value = 7
+why = """More turns: the pool is now 11.7 deep with 5.0% starved sessions, so turnover has somewhere to redeploy -- against the friction share ($0.70/side round trip) and the gamma of a 7-day tenor. dte-7's existing card is smoke-only; this grid is its first honest measurement. The (5,11) band always contains a weekly expiry."""
+source = "Batch-2 pre-registration section 1 (2026-08-17)"
+
+[knobs.take_profit_pct]
+value = 0.5
+why = """Faster recycling -- mechanism-predicted improved since 2026-08-04: the redeploy value of a freed slot has tripled with the deepened pool (menu 3.5 -> 11.7, starved 23.5% -> 5.0%)."""
+source = "Batch-2 pre-registration section 1 (2026-08-17)"

@@ -1,0 +1,106 @@
+name = "liq-oi-off"
+question = "Does dropping the ABSOLUTE open-interest floor -- keeping the volume floor and the per-account size cap -- widen the candidate menu and open more campaigns without buying fills that could not have happened?"
+base = "frozen"
+status = "testing"
+created = "2026-08-16"
+updated = "2026-08-16"
+note = """
+THE MEASUREMENT THAT MOTIVATED THIS. `capacity-baseline` (live tier, n_slots=5,
+scorecard live__366f1c919ec5761a) put the entry funnel on the record for the
+first time. Per session on which the bot actually had a slot to fill:
+
+    525.3   names scanned
+   -126.8   no chain that day, or not eligible
+   -369.6   refused by the weather gate
+     -5.9   no strike at the target delta inside the expiry band
+   ------
+     23.1   reach the liquidity floor
+    -18.7   REFUSED THERE
+   ------
+      3.5   left to choose from, against 5 slots
+
+The floor refuses 81% of everything that reaches it, and the pool is thinner
+than the free slots on 23.5% of routing sessions. It is the largest single
+constraint on this bot that has never been measured at the bench.
+
+WHY THE OPEN-INTEREST LEG SPECIFICALLY. Three arguments, in the order they
+matter:
+
+1. OI is the wrong instrument for an 11-day trade. Open interest is an
+   ACCUMULATION -- contracts left open, built up over the life of a listing. A
+   weekly strike listed three weeks ago carries little of it no matter how
+   tradeable it is. `target_dte = 11`, so this bot sells short-dated contracts
+   by design, and a 250-OI floor penalises exactly what the strategy is built
+   on. Volume -- 25 contracts actually traded today -- tests the same concern
+   without the tenor bias, and it stays ON in this arm.
+
+2. IT WAS CALIBRATED AS A JUNK FILTER AND SET LIKE A QUALITY BAR. The
+   justification recorded in `frozen.toml` names REGN carrying 1 open interest
+   and MTD carrying 0. To exclude 0 and 1, the threshold is 250. Everything
+   between 2 and 249 is collateral damage, and on a 529-name universe of
+   weekly strikes that band is most of the book.
+
+3. IT WAS NEVER MEASURED ALONE. The A2b review (2026-08-11) found that on live
+   chains rel_spread was the proximate cause of all 25 of 27 refusals and that
+   "dropping the OI and volume legs entirely left the count unchanged" -- i.e.
+   these legs were measured to refuse NOTHING, while standing behind a leg
+   doing all the work. That leg was then switched off. The legs measured to do
+   nothing are now the only floor there is, and nobody re-measured them.
+
+WHY THIS IS NOT A LICENCE TO SELL JUNK -- the point that makes the arm safe.
+`liq_max_pct_of_open_interest = 0.10` and `liq_max_pct_of_volume = 0.25` stay
+ON, and they are per ACCOUNT (`run_daily.py:796` builds one WheelConfig per
+capital level, each with its own state and its own step). The cap refuses
+outright when a single contract is already too large a share, so removing the
+absolute floor leaves an implicit floor of:
+
+    open interest >= 10   (below that, 1 contract exceeds 10% of the market)
+    volume        >= 4    (below that, 1 contract exceeds 25% of the day)
+
+and -- unlike the absolute floor -- it SCALES with the order. A 5k account
+buying one contract and a 500k account buying forty get different answers on
+the same strike, which is what "757 DOW contracts against 84 traded a day" was
+always about. The absolute floor cannot tell those two apart, because
+`liquidity_ok(chain, date, contract, cfg)` is never passed a quantity.
+
+DECLARED COUNTER-ARGUMENT. Every put sold here must be BOUGHT BACK -- the
+60% take-profit closes the position. A strike nobody trades can be impossible
+to exit, and a backtest will happily fill at a quote no one would honour. That
+is the real risk in this arm and it is why the floor exists. Two things bound
+it: `tp_exit_feasible` and `write_credit_ok` already test closability on price
+directly (16 refusals over the window), and the size cap bounds any order to a
+tenth of the open market. If this arm's entries cluster at OI far below 250 AND
+its exits stop being reachable, that is the falsification and it should be read
+as one.
+
+THE BAR, DECLARED BEFORE THE RUN.
+  MECHANISM (must all hold, or the arm is inert and the rest is noise):
+    * pool_depth_mean must RISE materially above 3.52
+    * pool_starved_pct must FALL below 0.235
+  OUTCOME (must all hold to call it a win):
+    * campaigns must RISE above 104
+    * ret_per_maxdd must NOT worsen (base 0.44)
+    * pnl_per_slotday_clean must not fall below 90% of base ($42.69)
+  NOT SUFFICIENT: total return alone. The window is one path and
+  `days_uncovered` explains more of the spread across arms than any entry rule
+  (Spearman -0.67, 2026-08-16 weather batch).
+  FALSIFIED IF: entries appear at OI < 10, or entry_gated_unclosable rises.
+"""
+
+[ops]
+# Same override and same reasoning as `capacity-baseline`: the shared [ops] is
+# n_slots = 1, at which there is one slot, no menu to be starved of, and the
+# capacity metrics this arm is judged on have no room to move.
+n_slots = 5
+
+[knobs.liq_min_open_interest]
+unset = true
+why = """
+OFF. The absolute open-interest floor was 250. See the note: OI is an
+accumulation measure applied to 11-day contracts, the threshold was calibrated
+against names carrying 0 and 1, and the per-account size cap
+(`liq_max_pct_of_open_interest = 0.10`) leaves an implicit floor of OI >= 10
+that scales with order size -- which is the test the review case actually
+justified. The volume leg stays at 25, so this arm changes ONE leg.
+"""
+source = "capacity-baseline scorecard live__366f1c919ec5761a"

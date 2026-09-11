@@ -1,0 +1,72 @@
+name = "wx-prefer-a"
+question = "Does preferring half A -- the half that measured worse on every metric -- also beat the live gate? If it does, wx-prefer-b's result is the reordering perturbing the path, not the half."
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+THE PLACEBO FOR C2. Written after `wx-prefer-b` returned and before this ran.
+
+`wx-prefer-b` came back at Sharpe +0.49 against the base arm's -0.02, ret/DD
++0.75 against -0.16, total +16.05% against -4.37%, better in all three years,
+with MORE campaigns (119 vs 109) and days_flat 0. That is a very large result for
+a change that cannot refuse a single candidate -- it only reorders a queue.
+
+IT ALSO FALSIFIED ITS OWN STATED MECHANISM. The reason for preferring half B was
+that B is assigned less often: 12.9% against 22.3% on the realized log. Selecting
+its own book, `wx-prefer-b` was assigned MORE often than the live gate -- 22.7%
+against 18.3%. So the arm won on the metrics the brief ranks third and fourth
+while failing the one it ranks second.
+
+When a mechanism claim fails and the P&L improves anyway, there are two live
+explanations and they have opposite consequences:
+
+  1. The preference is picking better names for a reason nobody has named yet
+     (B is a real signal, the assignment-rate story about it was wrong).
+  2. ANY reordering of the queue would have produced a comparable swing, because
+     with 5 slots and ~36 candidates a session the choice of which of many
+     roughly-equivalent names to hold is close to arbitrary, and the wheel's path
+     dependence -- an assigned name occupies its slot for weeks -- turns an
+     arbitrary early choice into a large end-of-window difference.
+
+THIS ARM SEPARATES THEM, and it is the cheapest possible test: prefer the half
+that every measurement says is worse. Under (1) this must LOSE to the base arm,
+and roughly symmetrically. Under (2) it wins too, or loses far less than the
+symmetry of the claim requires -- and `wx-prefer-b` is then a path artefact that
+happened to land the right way on one window.
+
+This is the same discipline the -40% stop failed: a rule that fired on 3 of 272
+campaigns looked excellent and was a fit. Here the rule fires on most sessions,
+so the fitting risk is not in the firing count -- it is in whether the DIRECTION
+was ever load-bearing. Only a placebo arm can say.
+
+DECLARED BEFORE THE RUN, so this cannot be read backwards:
+  * If `wx-prefer-a` LOSES to base by roughly what `wx-prefer-b` gained, the
+    half is real and C2 survives to a plateau/robustness check.
+  * If `wx-prefer-a` also BEATS base, C2 is reordering noise and both are dead.
+  * If `wx-prefer-a` is roughly flat against base, the effect is asymmetric --
+    B helps and A does not hurt -- which is possible but is a weaker claim than
+    C2's headline and must be reported as the weaker one.
+
+WHY `n_slots = 5`. Identical to `wx-prefer-b`; a placebo run under different
+conditions is not a placebo.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.prefer_chop_half]
+value = "A"
+why = """
+Sort half A ahead of half B -- the half that assigned at 22.3% rather than 12.9%,
+earned $56 a campaign rather than $346, and carried all six of the losing
+campaigns.
+
+This value is chosen to be the weaker half. That is its entire function: it is the null
+against which `wx-prefer-b`'s +20 points of total return is either a signal or a
+coin landing the same way twice. A knob set to the value the evidence argues
+against is not a proposal and this variant is never promotable.
+"""
+since = "2026-08-15"
+source = "placebo arm for wx-prefer-b, declared 2026-08-15 before running"

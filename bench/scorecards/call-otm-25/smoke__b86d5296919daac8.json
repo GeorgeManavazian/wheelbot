@@ -1,0 +1,146 @@
+{
+ "variant": "call-otm-25",
+ "base": "frozen",
+ "tier": "smoke",
+ "is_evidence": false,
+ "created": "2026-08-15T21:00:56+00:00",
+ "arms": {
+  "variant": {
+   "total_return": 0.02873501414351276,
+   "cagr": 0.05975924855796566,
+   "sharpe": 1.2845185761393672,
+   "max_drawdown": -0.03164726494518777,
+   "ret_per_maxdd": 0.9079778045047826,
+   "pnl": 2873.501414351267,
+   "final_equity": 102873.50141435127,
+   "n_days": 123,
+   "by_year": {
+    "2025": 0.02873501414351276
+   },
+   "worst_year": 0.02873501414351276,
+   "campaigns": 9,
+   "assignments": 2,
+   "assignment_rate": 0.2222222222222222,
+   "days_flat": 35,
+   "days_uncovered": 3,
+   "n_trades": 38,
+   "n_warnings": 147,
+   "warning_counts": {
+    "entry_gated_illiquid": 142,
+    "entry_gated_low_yield": 3,
+    "entry_gated_unclosable": 1,
+    "call_gated_unclosable": 1
+   },
+   "final_shares": {
+    "DIA": 100.0
+   },
+   "secs": 0.8
+  },
+  "base": {
+   "total_return": 0.025115014019535087,
+   "cagr": 0.052133093629582294,
+   "sharpe": 1.1368378786378235,
+   "max_drawdown": -0.03164726494518777,
+   "ret_per_maxdd": 0.7935919284978854,
+   "pnl": 2511.501401953501,
+   "final_equity": 102511.5014019535,
+   "n_days": 123,
+   "by_year": {
+    "2025": 0.025115014019535087
+   },
+   "worst_year": 0.025115014019535087,
+   "campaigns": 9,
+   "assignments": 2,
+   "assignment_rate": 0.2222222222222222,
+   "days_flat": 35,
+   "days_uncovered": 3,
+   "n_trades": 38,
+   "n_warnings": 147,
+   "warning_counts": {
+    "entry_gated_illiquid": 142,
+    "entry_gated_low_yield": 3,
+    "entry_gated_unclosable": 1,
+    "call_gated_unclosable": 1
+   },
+   "final_shares": {
+    "DIA": 100.0
+   },
+   "secs": 0.8
+  }
+ },
+ "provenance": {
+  "engine": {
+   "sha": "dd7e68ed248f",
+   "branch": "feat/ticker-dossiers",
+   "dirty": true,
+   "dirty_files": [
+    "ench/blocks.toml",
+    "bench/replay.py",
+    "bench/scorecard.py",
+    "bench/tests/test_bench_blocks.py",
+    "bench/variant.py",
+    "live/market_live.py",
+    "live/run_chain_snapshot.py",
+    "live/run_daily.py",
+    "src/engine_v2/options/portfolio.py",
+    "src/engine_v2/options/wheel.py",
+    "src/engine_v2/regime/state.py"
+   ]
+  },
+  "config_hash": {
+   "variant": "b86d5296919daac8",
+   "base": "3f779976c6bd9b8e"
+  },
+  "data": {
+   "hash": "7ddf3992dac40d44",
+   "n_files": 168,
+   "bytes": 88200582,
+   "n_tickers": 12,
+   "stores": [
+    "data/options/chains",
+    "data/options/open_interest"
+   ]
+  },
+  "env": {
+   "python": "3.12.13",
+   "pandas": "3.0.3",
+   "host": ""
+  }
+ },
+ "conditions": {
+  "start": "2025-01-01",
+  "end": "2025-07-01",
+  "n_slots": 5,
+  "capital": 100000.0,
+  "selector": "chop",
+  "max_dte": 15,
+  "n_tickers_requested": 12,
+  "n_tickers_loaded": 12,
+  "dropped": {
+   "no_chain": 0,
+   "no_closes": 0,
+   "no_state": 0
+  }
+ },
+ "divergences": [
+  "open_interest is present on 93.3% of chain rows (0 of 12 tickers have no column at all). liquidity_ok REFUSES when a threshold is set and the field is missing or NaN, so every one of the other 6.7% is barred from entry -- on data availability, not on liquidity. The OI store reaches near-full coverage only from 2024-08; the `live` tier starts there for this reason. Visible in the refusal counts as entry_gated_illiquid."
+ ],
+ "wall_secs": 1.672135829925537,
+ "notes": "",
+ "schema": 1,
+ "delta": {
+  "sharpe": 0.14768069750154367,
+  "ret_per_maxdd": 0.1143858760068972,
+  "total_return": 0.0036200001239776736,
+  "cagr": 0.007626154928383366,
+  "max_drawdown": 0.0,
+  "worst_year": 0.0036200001239776736,
+  "pnl": 362.0000123977661,
+  "campaigns": 0.0,
+  "assignments": 0.0,
+  "assignment_rate": 0.0,
+  "days_flat": 0.0,
+  "days_uncovered": 0.0,
+  "n_trades": 0.0
+ }
+}

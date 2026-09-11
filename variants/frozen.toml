@@ -1,0 +1,301 @@
+name = "frozen"
+question = ""
+base = "plain"
+status = "promoted"
+created = "2026-08-14"
+updated = "2026-09-05"
+note = """
+THE MASTER DOCUMENT. This is the config the live paper bot actually runs.
+
+`live/run_daily.py` loads it -- `FROZEN = bench.config.load_frozen()` -- so this
+file is the source of truth, not a copy of one. Editing it changes what the bot
+does on the next step. There is a golden test (`bench/tests/test_frozen_golden.py`)
+pinning the resolved dict to the literal that lived in `run_daily.py` up to
+2026-08-14, so the migration to this file is a provable no-op; that test is
+expected to change ONLY when a promotion changes it, and the changing of it is
+the diff you review.
+
+DO NOT HAND-EDIT A KNOB TO TRY SOMETHING OUT. That is what variants are for.
+Write `variants/<idea>.toml`, run it, and let `bench promote` write the result
+in here with its provenance. Hand-editing is exactly how a flag ends up live
+with no measurement behind it -- which is what happened to
+`min_ann_yield_on_collateral`, which sat in the engine from commit 682823e
+while this dict never set it, and `_STATUS` reported the work done.
+
+Every `why` below is the prose that lived as a comment beside the knob in
+`run_daily.py`. Nothing was summarised or dropped.
+"""
+
+[knobs.put_delta]
+value = 0.3
+why = """
+Short-put delta. Part of the original live config triple (0.30 delta / 11 DTE /
+60% TP) that has never been A/B'd as a set against the alternatives -- the
++95.4% IV-ranker run used 0.40 / 7 / 25%, and "ship that version" would mean
+changing all three together. Treat this as inherited, not proven.
+"""
+since = "2026-07-17"
+
+[knobs.call_delta]
+value = 0.5
+why = """
+Covered-call delta once assigned. Higher than the put delta on purpose: the
+call's job after assignment is to get the shares called away, not to collect
+the most premium.
+"""
+since = "2026-07-17"
+
+[knobs.target_dte]
+value = 11
+why = """
+Target days to expiry. Note the band around it was wrong until 2026-08-10 --
+it skipped one whole weekday at every target (commit 7461961).
+"""
+since = "2026-07-17"
+
+[knobs.take_profit_pct]
+value = 0.6
+why = """
+Buy the short back at 60% of the credit collected. Applies to puts and, unless
+`call_take_profit_pct` overrides it, to covered calls too -- which is worth
+knowing, because taking profit on a covered call BUYS BACK THE CALL AND KEEPS
+YOU IN THE STOCK.
+"""
+since = "2026-07-17"
+
+[knobs.call_min_strike]
+value = "basis"
+why = """
+Covered calls only at a strike at or above net basis. Never write a call that
+locks in a loss on the shares. This is the mechanic that -- with no assigned-
+stock exit -- meant nothing ever sold shares: 1,347 of 5,205 slot-days held
+assigned shares with no call against them.
+"""
+since = "2026-07-12"
+
+[knobs.chop_max_fast_fall]
+value = 0.01
+why = """
+DOWN-ONLY tactical gate (A/B'd 2026-07-18): reject only a FALLING short-horizon
+leg (9d/20d < -1%). A put seller loses on a fall, not a rise, so keep up-legs
+(winners). The symmetric + structural gates backtested worse (symmetric -71%
+P&L, structural went negative) and were dropped. Guards the AA/VALE
+falling-knife names.
+"""
+since = "2026-07-18"
+source = "A/B 2026-07-18"
+
+[knobs.liq_max_rel_spread]
+unset = true
+why = """
+A2 liquidity gate (2026-08-01): ON in production, entries only. Review: an
+ungated bot requested 757 DOW contracts vs ~84/day traded; this gate would have
+refused 114 of 145 real entries (fills that could not have happened, not lost profit). Missing/NaN
+field with a set threshold = refuse.
+
+A2b (2026-08-11): `liq_max_rel_spread` was 0.10 and is now OFF. Measured on
+THIS bot's own 2026-08-10 chains: of 27 good-to-rent names it refused 25, and
+rel_spread was the proximate cause on every one -- dropping the OI and volume
+legs entirely left the count unchanged at 2/27, so the two legs the review case
+actually justified were refusing nothing while an unjustified leg did all the
+work.
+
+It refuses on CHEAPNESS, not illiquidity. Option prices move on a 1-cent grid,
+so at a $0.10 mid the tightest market that can physically exist is already 10%
+of mid -- no contract at or below that price could EVER pass, however liquid.
+WBD (0.09/0.14, 6798 open interest, 113 traded) was refused; CCL passed only
+because its premium was expensive enough in absolute cents. The gate was
+therefore biased against exactly what this strategy sells: cheap, short-dated,
+out-of-the-money puts.
+
+The junk it used to catch is caught by the floors below: REGN (5.40/11.10)
+carries 1 open interest and 0 volume, MTD carries 0 and 0. Unclosable entries
+remain independently refused by A3 (tp_exit_feasible), which is where that
+concern belongs.
+"""
+since = "2026-08-11"
+source = "A2b, live chains 2026-08-10"
+
+[knobs.liq_min_open_interest]
+value = 10.0
+why = """
+250 -> 10. NOT a tuning choice: `liquidity_size_cap` refuses when
+`int(open_interest * liq_max_pct_of_open_interest)` is zero, and at 0.10 that
+is open interest below 10. So 10 is the floor the bot already enforces on a
+one-contract order, written down explicitly instead of left implicit. Keeping
+the knob SET (rather than unsetting it) preserves two behaviours that vanish
+when it is None: the two-sided-market check, and refusal on a missing or NaN
+field. The original junk cases the 250 floor was justified by -- REGN at 1 open
+interest, MTD at 0 -- are still refused.
+
+--- promoted 2026-08-17 from variant `liq-junk-floor` ---
+Verdict: Owner decision 2026-08-17: ship it. The old bar was blocking too much for no reason, the other rule already covers it, and I am not buying it for the profit number. The floor goes from 250/25 open interest and volume to 10/4 -- the exact points at which the per-account size cap (10% of open interest, 25% of volume) reaches one contract, so the bot was already refusing everything below them. Proof it is not a loophole: liq-junk-floor trades a book IDENTICAL to liq-floor-off -- 142 entries, same date, ticker, strike and size on every one, same P&L to the cent -- because names below OI 10 / volume 4 were never tradeable anyway. Lowering the floor therefore buys everything that removing it buys, while keeping two behaviours that removal destroys: liquidity_ok returns early when all three thresholds are None and silently disables its own no_two_sided_market check, and an unset threshold stops refusing missing/NaN fields. Measured live tier, n_slots=5, engine 431c75f634ed clean: menu depth 3.5 -> 11.7, starved sessions 23.5% -> 5.0%, campaigns 104 -> 142, days_uncovered 1,037 -> 641, idle slot-days 47 -> 7. Every realism bar declared before the run was met exactly -- minimum entry open interest 10, minimum volume 4, maximum order 25.0% of the day's volume and 10.0% of open interest, zero entries into a zero-volume strike. NOT PROMOTED FOR THE RETURN. ret_per_maxdd went 0.44 -> 1.03 but the ladder 250/50/10-4 is non-monotone (0.44 / 0.22 / 1.03), the middle rung worse than both neighbours, which is one assigned name holding a slot for months rather than a dial; the mechanism and realism columns are monotone and this rests on those. Declared cost: earnings per slot-day on clean campaigns fall $42.70 -> $35.93, and campaigns touching an implausible fill rise 10% -> 17% -- though every such fill in every arm is a SELL_CALL or CLOSE_PUT, both ungated, and not one is an entry. That is the next piece of work, not a defect of this one.
+Evidence: scorecard=live/76c904270c347994 · engine=431c75f634ed · data=194898688a1b3ca0 · sharpe_delta=+0.387 · ret_per_maxdd_delta=+0.587"""
+since = "2026-08-17"
+source = "variant:liq-junk-floor"
+
+[knobs.liq_min_volume]
+value = 4.0
+why = """
+25 -> 4, by the same arithmetic: `int(volume * 0.25)` is zero below 4, so a
+one-contract order already requires 4 contracts traded. Volume is the honest
+liquidity test for this bot -- unlike open interest, it is not an accumulation
+measure and so does not penalise an 11-day contract for being 11 days old --
+and it stays SET here, at the level the size cap enforces, rather than being
+switched off as in `liq-floor-off`.
+
+--- promoted 2026-08-17 from variant `liq-junk-floor` ---
+Verdict: Owner decision 2026-08-17: ship it. The old bar was blocking too much for no reason, the other rule already covers it, and I am not buying it for the profit number. The floor goes from 250/25 open interest and volume to 10/4 -- the exact points at which the per-account size cap (10% of open interest, 25% of volume) reaches one contract, so the bot was already refusing everything below them. Proof it is not a loophole: liq-junk-floor trades a book IDENTICAL to liq-floor-off -- 142 entries, same date, ticker, strike and size on every one, same P&L to the cent -- because names below OI 10 / volume 4 were never tradeable anyway. Lowering the floor therefore buys everything that removing it buys, while keeping two behaviours that removal destroys: liquidity_ok returns early when all three thresholds are None and silently disables its own no_two_sided_market check, and an unset threshold stops refusing missing/NaN fields. Measured live tier, n_slots=5, engine 431c75f634ed clean: menu depth 3.5 -> 11.7, starved sessions 23.5% -> 5.0%, campaigns 104 -> 142, days_uncovered 1,037 -> 641, idle slot-days 47 -> 7. Every realism bar declared before the run was met exactly -- minimum entry open interest 10, minimum volume 4, maximum order 25.0% of the day's volume and 10.0% of open interest, zero entries into a zero-volume strike. NOT PROMOTED FOR THE RETURN. ret_per_maxdd went 0.44 -> 1.03 but the ladder 250/50/10-4 is non-monotone (0.44 / 0.22 / 1.03), the middle rung worse than both neighbours, which is one assigned name holding a slot for months rather than a dial; the mechanism and realism columns are monotone and this rests on those. Declared cost: earnings per slot-day on clean campaigns fall $42.70 -> $35.93, and campaigns touching an implausible fill rise 10% -> 17% -- though every such fill in every arm is a SELL_CALL or CLOSE_PUT, both ungated, and not one is an entry. That is the next piece of work, not a defect of this one.
+Evidence: scorecard=live/76c904270c347994 · engine=431c75f634ed · data=194898688a1b3ca0 · sharpe_delta=+0.387 · ret_per_maxdd_delta=+0.587"""
+since = "2026-08-17"
+source = "variant:liq-junk-floor"
+
+[knobs.liq_max_pct_of_open_interest]
+value = 0.1
+why = """
+A2b size cap: the RATIO the A2 floor could not express, since liquidity_ok()
+never saw order size. Applied per account -- run_daily builds a WheelConfig per
+capital level -- so the same contract caps the 500k account and leaves the 5k
+one untouched. It writes the order SMALLER rather than refusing the name;
+refusing would idle the slot, which is the starvation failure the rest of the
+engine fights. Below one contract it refuses, under entry_gated_size.
+
+Measured on 2026-08-10 at 10%/25%: 5k and 50k are unbound (they cannot afford
+enough to matter), 100k binds on 3 of 7 names, and 500k binds on 6 of 7 --
+which is where the unfillable-order risk actually lived. PROVISIONAL: no backtest
+has run under these yet.
+"""
+since = "2026-08-11"
+source = "PROVISIONAL -- no backtest has run under these yet"
+
+[knobs.liq_max_pct_of_volume]
+value = 0.25
+why = """
+A2b size cap, volume leg. Same mechanic and same provisional status as
+`liq_max_pct_of_open_interest` -- see that knob for the measurement.
+"""
+since = "2026-08-11"
+source = "PROVISIONAL -- no backtest has run under these yet"
+
+[knobs.min_ann_yield_on_collateral]
+value = 0.08
+why = """
+Collateral-yield floor (spec 2026-08-04, engine commit 682823e). VETO on new
+short-put entries whose credit is a negligible return on the cash the strike
+locks up: (credit/strike)*(365/dte) < this. The pre-existing minimum credit is
+ABSOLUTE ($2.50/contract here), so a $1,000-strike put locking $100,000 cleared
+it on $2.50 -- the owner's $10-against-$100k case. Measured medians 2024-01 ->
+2026-07 are 18.3/30.9/45.6% annualised at 0.20/0.30/0.40 delta and the least
+generous real name (XLU) is 8.4%, so 0.08 is a junk filter, not a tuning
+surface.
+
+Wired into FROZEN 2026-08-06: the engine had it from 682823e but this dict did
+not set it, so the live bot was running WITHOUT it while _STATUS reported the
+config work done. That gap is the reason `bench promote` exists.
+"""
+since = "2026-08-06"
+
+[knobs.max_credit_pct_of_strike]
+value = 0.03
+why = """
+Intrinsic filter (same spec/commit as the yield floor, same 2026-08-06 wiring
+gap). A short put whose credit is a large fraction of the strike is not a
+volatility sale -- it is mostly INTRINSIC value, a stock purchase wearing a
+premium costume. On the 2.53y 500k run, 2 of 299 entries exceeded 3% (NOK
+37.2%, HL 9.4%) and carried -$47,150 of the -$64,650 total share-leg loss: 73%
+of the damage from 0.7% of the trades. Median entry is 0.52% of strike, so 3%
+is nearly inert.
+"""
+since = "2026-08-06"
+
+[knobs.earnings_blackout]
+value = true
+why = """
+ON since 2026-08-09 (owner: "a no-brainer to have it on"). A scheduled print
+inside a short put's life is a discontinuity 0.30-delta premium was not priced
+for, and the chop scanner's vol-percentile ranking actively selects for names
+that have one coming.
+
+It stayed off until now because the flag ALONE is a zombie gate: _live_market()
+never passed `earnings=`, so earnings_dates() returned None for every ticker,
+in_blackout() read that as unknown, unknown allows, and the gate reported
+protection it was not giving -- silently, since per-ticker unknown-allows is the
+correct behaviour it was imitating. Turning it on therefore took three things,
+not one: earnings_known() as a capability declaration, a fail-loud guard in
+step_one_day (the live entry point -- the old guard was in run_portfolio_wheel,
+which live never calls), and _earnings_for() building the calendar.
+
+STILL a data dependency: data/earnings/*.parquet is outside the live/ src/
+deploy/ rsync and must be copied to the box. Both the loader and the guard
+raise by name if it is missing, so the failure is a stopped run, never a quiet
+gate.
+"""
+since = "2026-08-09"
+source = "owner ruling"
+
+[knobs.fees_per_contract]
+value = 0.05
+why = """
+A13 (2026-08-02): pass-through fees (OCC/ORF/SEC/TAF) as one flat
+per-contract-side adder -- PROVISIONAL $0.05, owner verifies against the first
+real statement (the review's implied $0.30 double-counts exchange fees Schwab
+embeds in the $0.65 commission). Dataclass defaults stay 0.0 so goldens and
+every historical backtest stay byte-identical.
+"""
+since = "2026-08-02"
+source = "PROVISIONAL -- verify against the first real statement"
+
+[knobs.fee_per_assignment]
+value = 0.0
+why = """
+A13: the broker's per-EVENT assignment/exercise fee. $0 at Schwab since 2019
+(VERIFY) -- wired so a nonzero is a one-line change rather than an engine
+change.
+"""
+since = "2026-08-02"
+source = "VERIFY"
+
+[knobs.call_take_profit_pct]
+value = 1.0
+why = """
+Hold covered calls to expiry instead of buying them back at 60% of the credit.
+>= 1.0 is the value `try_take_profit` already understands as hold-to-expiry
+(fills.py:117-118), so this adds no new branch and no new threshold -- which
+matters, because 54 assignments cannot honestly support a fitted number, and the
+0.25 arm was the worst in the whole 2026-08-14 sweep (stage 1 -41.6%, stage 2
+-2.9%).
+
+Set on the CALL leg only. `take_profit_pct` stays 0.60 for the short put, where
+taking profit closes the position and frees the slot -- the opposite of what it
+does on a call, where it closes the hedge and keeps the stock. The two legs have
+wanted different values since the knob was added; this is the first arm that
+gives them different values.
+
+n = 149 take-profit buy-backs on covered calls, across 54 assigned campaigns and
+all five years of the exported arm (results/best_run/trades.csv, CLOSE_CALL
+rows), of which 98 were followed by no re-write before the original expiry and
+140 would have expired worthless if held. That is a rule, not a fit.
+
+It is only safe to set because `write_credit_ok` now pins the write floor
+independently of the take-profit. Before 2026-08-16 this value silently removed
+the call leg's only minimum-credit rule.
+
+--- promoted 2026-08-16 from variant `calls-to-expiry` ---
+Verdict: Owner decision 2026-08-16: ship it, and ship ONLY this. Covered calls now run to expiry; the short put keeps its 60% take-profit. Measured at n_slots=5 on both evidence tiers with the write-credit floor in place. Full tier (2022-06..2026-07, 529 names, 45 assignments): ret/DD -0.24 -> 1.61, return -6.7% -> +33.9%, max drawdown -27.8% -> -21.1%, and uncovered slot-days 2,511 -> 1,965. Better in five years out of five, which is what separates this from the -40% stop that fired three times. The declared counter-argument was refuted by the run: campaigns ROSE 158 -> 198, because holding the call to expiry is what gets the shares called away and frees the slot, while the take-profit bought the hedge back and kept the position stuck. Live tier agrees (ret/DD -0.16 -> 0.44, uncovered 1,146 -> 1,037). The bar was declared before the run - days_uncovered must fall AND ret/DD must not worsen, with P&L alone explicitly not sufficient - and both halves were met. NOT shipped alongside: call-otm-25 failed its own bar on the long window at exactly 2 of 5 years, and exit-pair (both knobs) is worse than either single on both windows, so the two are substitutes rather than complements. Call-write refusals go 792 -> 749.
+Evidence: scorecard=full/366f1c919ec5761a · engine=daf481722377 · data=b702e8f0548b8fcb · sharpe_delta=+0.488 · ret_per_maxdd_delta=+1.854"""
+since = "2026-08-16"
+source = "variant:calls-to-expiry"
+
+[knobs.exit_impact_max_spreads]
+value = 1.0
+why = """
+Caps the extra slippage charged on an oversized covered-call write or put
+buyback at one bid-ask spread, however far past the entry-side size ratio (10%
+of open interest, 25% of volume) the order sits; 1.0 is the smallest non-zero
+assumption and a declared lower bound on the real cost of such fills.
+
+--- promoted 2026-09-05 from variant `exit-impact-model` ---
+Verdict: Adopted 2026-09-05: covered-call writes and put buybacks now pay for their own size instead of pricing at the clean quote -- the two legs that can never refuse a fill. Live tier, clean tree: total return +8.16% against +22.92% for the base arm (-14.76pp), Sharpe 0.34 against 0.72, campaigns 104 against 142. Same lower-bound cap (1 spread) the promotion note declared; entry-side decisions unchanged on a flat-state replay of the one captured live day (0 of 0 differed), and the entry-warning-count drift in the full backtest follows from different campaign timing.
+Evidence: scorecard=live/f92ee3aba856bf77 · engine=094d658cc678 · data=b3cbc28b26c62418 · sharpe_delta=-0.383 · ret_per_maxdd_delta=-0.651"""
+since = "2026-09-05"
+source = "variant:exit-impact-model"

@@ -1,0 +1,140 @@
+name = "tier3-stop-40"
+question = "Does a deep hard stop alone -- tier 3 without tier 2, selling the shares once spot is 40% below net basis, the basis floor untouched -- unjam the slots without realising the losses that killed every previous stop?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-17"
+updated = "2026-08-17"
+touches = ["exit"]
+verdict = """
+REJECTED 2026-08-17 (Analyzer, batch 1). Middle rung. Alive (shares_sold 2,
+0.067). Failed: +4.65% (base-18.3pp), ret/DD 0.21 (-0.82), days_uncovered 700
+-- ABOVE base's 641 -- pnl/sd_assigned -$0.66; two year-buckets worse by >3pp
+(2025 -10.3, 2026 -8.1). Its window-end book (KWEB -$34.8k, BA, NIO 4,000sh,
+PG) is worse than the base's, which is path, not mechanism -- but the bar
+does not care why.
+
+FAMILY NOTE. Dial: ret/DD across {30,40,50-inert==base} = -0.54/0.21/1.03 --
+monotone in how RARELY the stop fires; every fire loses money; extrapolation
+to zero fires = base. Third falsification of the stop family (put_stop_mult,
+the -40% stop measured 2026-07, this ladder) with the pool-deepening excuse removed
+-- the "redeploy value tripled" hypothesis registered before the run is
+falsified. Owner's proposal closed with evidence.
+
+Scorecard: bench/scorecards/tier3-stop-40/live__2c250f0719b03f78.json
+(engine 0838351260cf, dirty=false).
+"""
+note = """
+GATE-CAMPAIGN BATCH 1, WAVE 1 (Analyzer bar v2, 2026-08-17). Rung 0.30 of a
+MANDATORY three-rung ladder (tier3-stop-40 / -40 / -50) -- never read one rung
+alone; the -40% stop of 2026-07 looked excellent alone and did not survive its
+neighbours.
+
+THE ARM. assignment_exit on, exit_trigger = "never" (tier 2 fully disabled --
+the basis floor keeps its patience, no below-basis call is ever written by
+this mechanic), exit_stop = "pct_below_basis" with the stop percentage carried
+by exit_stop_buffer (confirmed: tier3_stop_hit reads exit_stop_buffer for this
+mode; exit_trigger_pct belongs to tier 2's trigger and is NOT set here;
+engine-tested in tests/engine_v2/options/test_assignment_exit.py, the
+trigger-never cases). This is the arm exit-ladder-on's verdict named as "the
+shape the data asks for" and recorded as not-run, with the inert-arm trap
+(exit_trigger never + default exit_stop = silently dead) avoided exactly as
+that verdict prescribed.
+
+MECHANISM. The uncovered mass is concentrated in never-resolvers: 4 of 40
+assignments never resolved and ate 51% of every held-day (2026-08-14
+stuck-campaign review); NIO is stuck in the live book now. A freed slot
+re-enters a pool 3x deeper than when stops were last priced (menu depth 3.5 ->
+11.7, starved sessions 23.5% -> 5.0% after the 10/4 floors), so the
+opportunity side of a stop is larger than in any previous measurement.
+
+REGISTERED PREDICTION (in the file before the run, so the result grades the
+prediction too): prior evidence leans FAIL on P&L via 2026 realized losses --
+holding beat dumping in the earlier accounting, and the oracle prize was
+modest. Either way this run CLOSES the owner's standing "liquidate when no
+call can be found" proposal with a measured answer.
+
+THE BAR, DECLARED BEFORE THE RUN (Analyzer, final version).
+
+  MECHANISM-ALIVE: shares_sold >= 1, else the card is NOT-EVIDENCE (an armed
+  stop that never fired measures nothing -- and nothing in the engine flags
+  that state; the card looks valid).
+
+  REJECT REGARDLESS OF P&L: sold_per_assignment > 1/3 at ANY rung -- a stop
+  that common is the -40% stop in a ladder's clothes.
+
+  PASS AT THE SHIPPING RUNG requires ALL of:
+    * days_uncovered <= 450
+    * pnl_per_slotday_assigned >= 11.77 dollars (the base figure)
+    * campaigns >= 142
+    * at n5 AND n20: total_return >= base - 10pp AND ret_per_maxdd >= base - 0.35
+    * year-bucket rule: worse than base in at most 1 of 3 buckets
+      (2024/2025/2026) by more than 3pp
+
+  DIAL CHECK across the ladder:
+    * days_uncovered and shares_sold must drift MONOTONICALLY with stop depth
+    * middle-rung ret/DD must not exceed BOTH neighbours by more than 0.5 --
+      the -40% spike detector.
+
+SHARED BATCH RULES. Noise band: at n5, total_return within base - 10pp is
+"not degraded".
+"""
+
+[ops]
+# The shared [ops] is n_slots = 1, at which an exit mechanic has almost
+# nothing to fire on. Five is the width every capacity claim is stated at.
+n_slots = 5
+
+[knobs.assignment_exit]
+value = true
+why = """
+ON -- gives the assigned position a second exit besides being called away.
+Never naked: tier 3 sells shares only if the short call is closed in the same
+step, else the sale is refused (engine invariant, tested). With exit_trigger
+= "never" below, switching this on arms ONLY the deep stop: tier 2, the rung
+that rejected exit-ladder-on by writing fat below-basis calls, stays
+structurally off.
+"""
+source = "exit-ladder-on verdict 2026-08-17 (named not-run arm); Analyzer batch-1 v2"
+
+[knobs.exit_trigger]
+value = "never"
+why = """
+Tier 2 disabled entirely. exit-ladder-on measured tier 2 as the ladder's
+poison: below-basis 0.80-delta calls sold the recovery away for a one-off
+credit (call credit 19,179 -> 53,206 dollars, ret/DD 1.03 -> -0.46). "never"
+keeps the basis floor's patience exactly as frozen has it and leaves tier 3 as
+a pure tail stop -- the shape the 2026-08-14 stuck-campaign review argues for,
+since 4 of 40 assignments carried 51% of all held-days.
+"""
+source = "exit-ladder-on scorecard live (rejected 2026-08-17)"
+
+[knobs.exit_stop]
+value = "pct_below_basis"
+why = """
+The one exit_stop mode that works without tier 2: the ladder modes read the
+tier-2 exit_strike, which "never" leaves as None, and tier3_stop_hit returns
+False on a None strike -- the documented inert-arm trap. pct_below_basis fires
+off net basis directly (spot < net_basis * (1 - exit_stop_buffer)), needs no
+tier-2 write, and is the plain-stop control the engine kept for exactly this
+benchmark. Aliveness is engine-tested (test_assignment_exit.py: pct_below_basis
+fires without any exit_strike; trigger-never still lets the deep stop fire).
+"""
+source = "portfolio.tier3_stop_hit; tests/engine_v2/options/test_assignment_exit.py"
+
+[knobs.exit_stop_buffer]
+value = 0.40
+why = """
+The stop depth for exit_stop="pct_below_basis": sell once spot is 40% below
+net basis; the middle rung of the 0.30/0.40/0.50 ladder, run with both
+neighbours so a single-rung spike is readable.
+"""
+source = "Analyzer batch-1 v2 ladder spec (2026-08-17)"
+
+[knobs.exit_cooldown_days]
+value = 0
+why = """
+No re-entry ban after a stop, explicitly zero (the engine default, written
+down so the ladder is one moving part). A cooldown is a second threshold on
+the same 45-event sample; the ladder varies stop depth only.
+"""
+source = "Analyzer batch-1 v2 ladder spec (2026-08-17)"

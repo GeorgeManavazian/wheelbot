@@ -1,0 +1,73 @@
+# THE PROMOTION BAR -- what a paragraph must prove before it joins the essay.
+#
+# THIS FILE IS DATA, NOT CODE, ON PURPOSE. The owner pinned the design of the
+# evidence bar on 2026-08-14 ("a cool idea for it later on after we build it"),
+# so the machinery was built to take whatever bar arrives without a code change.
+# Add a gate name to `required`, add a threshold under [thresholds], add a
+# conditional block -- `bench promote` reads this file every time it runs.
+#
+# WHAT THE MACHINE ENFORCES vs WHAT THE OWNER DECIDES. The machine checks that
+# evidence EXISTS, is FRESH (produced from the variant's current knobs and a
+# clean tree), and is of a kind that counts. It does NOT decide whether the
+# numbers are good -- that judgement is `--verdict`, supplied by a human, and
+# recorded verbatim in the master config's provenance. When the bar arrives,
+# numeric thresholds go under [thresholds] and the machine starts checking
+# those too.
+#
+# Gate names available today: tests, scorecard, replay, verdict.
+# (bench/policy.py:GATES -- adding one there makes it namable here.)
+
+[evidence]
+# Every promotion needs these.
+required = ["tests", "scorecard", "verdict"]
+
+# Which scorecard tiers count as evidence. `smoke` and `mid` are stamped
+# is_evidence=false at run time and cannot satisfy the gate however they are
+# listed -- a 12-ETF six-month run is an inner-loop check, not a verdict.
+#
+# `live` (2024-08 -> 2026-07) is listed FIRST because it is the only window
+# where the master config runs faithfully: the OI store covers 86 of 534
+# tickers before 2024-08 and 533 after, and `liq_min_open_interest = 250`
+# refuses every contract whose OI is missing. `full` doubles the history and
+# is accepted for variants that do not touch liquidity; `run._divergences`
+# writes the actual per-row OI coverage into every scorecard either way.
+accept_tiers = ["live", "full"]
+
+# A scorecard from a dirty working tree cannot be re-run by anyone,
+# including the person who ran it. Set true only if you know why you are doing
+# it; the reason lands in the changelog either way.
+allow_dirty_tree = false
+
+# Refuse evidence whose config hash no longer matches the variant. This is the
+# anti-cherry-pick rule: without it you can tune a variant after a favourable
+# run and promote on the old number.
+require_fresh = true
+
+# The fast suite, run at promotion time rather than trusted from a stored
+# result -- a test pass recorded yesterday says nothing about the tree today.
+[tests]
+command = ["-m", "pytest", "-q", "-m", "not slow"]
+timeout_secs = 900
+
+# Conditional gates. A variant whose `touches` list intersects `when_touches`
+# picks up the extra requirements.
+#
+# WHY LIQUIDITY IS HERE. The A2b finding -- that `liq_max_rel_spread` refused 25
+# of 27 good-to-rent names on cheapness rather than illiquidity -- was NOT
+# visible in any backtest. It was measured on the bot's own live 2026-08-10
+# chains, because backtest chains had no open_interest column at the time. A
+# liquidity mechanic that only ever meets backtest chains has not been tested
+# against the thing that broke last time.
+[conditional.liquidity]
+when_touches = ["liquidity", "fills", "spread", "size", "slippage"]
+require = ["replay"]
+why = "A2b was invisible to backtests; it was found on live chains."
+
+# Numeric bars. EMPTY BY DESIGN -- see the header. Nothing here is checked
+# until the owner fills it in. Example of the shape it will take:
+#
+#   [thresholds]
+#   sharpe = 0.0            # variant - base must exceed this
+#   ret_per_maxdd = 0.0
+#   worst_year = 0.0
+[thresholds]

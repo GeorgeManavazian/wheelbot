@@ -1,0 +1,140 @@
+name = "vol-ceiling-40"
+question = "Does an ABSOLUTE realized-volatility ceiling at 0.40 reduce the DEPTH of the bad assignments -- the ones that go so far underwater no call above basis is writable -- without re-starving the candidate menu?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-17"
+updated = "2026-08-17"
+verdict = """
+REJECTED 2026-08-17, and the whole family with it. All four rungs ran on the
+live tier at n_slots=5 against the config promoted the same day (engine
+3e814d834e75, clean on every arm).
+
+  ceiling        none      0.30      0.40      0.45      0.50
+  ret/maxDD     1.029    -0.217    -0.143     0.483     0.418
+  total return +22.9%     -2.9%     -2.6%     +8.3%     +6.7%
+  campaigns       142       107        97       122       103
+  days_uncovered  641       873       984       678       908
+  assignment %  0.197     0.215     0.268     0.238     0.233
+  $/slot-day clean 35.93   19.97     29.68     23.96     28.09
+
+EVERY RUNG LOSES TO NO CEILING AT ALL, on every column that matters. Not one
+beat the base on return-per-drawdown, campaigns, the jam, the assignment rate
+or the earnings per slot-day.
+
+THE MECHANISM BAR FAILED FIRST, which is what makes this a clean rejection
+rather than a P&L disappointment. The arm was aimed at the DEPTH of the bad
+assignments -- the campaigns that go so far underwater no call above basis is
+writable. `days_uncovered` is that quantity, and it went the wrong way at
+every rung: 641 -> 873 / 984 / 678 / 908. Refusing the most volatile names did
+not reduce the jam, it increased it. And the assignment RATE rose at every rung
+too, from 0.197 to between 0.215 and 0.268 -- consistent with the 2026-08-16
+finding that no weather knob moves it, and with the direction being noise.
+
+AND IT IS NOT A DIAL. 0.30 -> 0.40 -> 0.45 -> 0.50 gives -0.217, -0.143, 0.483,
+0.418 on ret/maxDD. Non-monotone, with the two middle rungs adjacent and 0.6
+apart. The plateau test this ladder existed to apply says: a spike, not a dial.
+0.45 looked best because 0.45 was lucky on this path, and the pre-registered
+rule was that a rung beating the base while its neighbours lose is rejected on
+that ground whatever its P&L. It does not even clear that -- 0.483 loses to the
+base's 1.029.
+
+Where the ex-ante case failed, precisely. The exhibit was real: four of the
+six campaigns that carried 100% of all loss (ALB 0.58, SNAP 0.48, NIO 0.70,
+HOOD 0.66) sat in the top realized-vol quintile against a pool median of 0.231,
+and a 0.45 ceiling refuses only 5.6% of gate-passing ticker-days. Both facts
+survive. What does not survive is the inference. Realized vol correlates +0.453
+with campaign P&L, and the fourth quintile is the single best band in the log
+at +$455 a campaign -- so the ceiling cuts the mean to remove the tail, and on
+this window the mean it cut was worth more than the tail it removed. Six events
+were never enough to say otherwise, and this is what the ladder was for.
+
+This is now the THIRD family of entry restrictions measured and rejected on
+this bot -- the IV-rank veto (2026-08-04), the ten weather re-labellings
+(2026-08-16), and now the absolute volatility ceiling. The pattern is
+consistent and worth stating plainly: on this strategy, refusing candidates
+costs more in campaigns than it saves in quality, and it has never once been
+close.
+"""
+note = """
+THIS RUNG: 0.40.
+
+0.40 is the CONSERVATIVE rung: it refuses more than 0.45 and less than the
+0.30 already on file, so it brackets the proposed value from below. If the
+effect is real and monotone it should show a weaker version of 0.45's result;
+if 0.45 wins and both 0.40 and 0.50 lose, 0.45 is a fit and the ladder says so.
+Chosen as a round number a fifth of the way between the pool median (0.231) and
+the worst loser (ALB at 0.58), not by search.
+
+
+THE LADDER. Four rungs on one knob, run together so no single value can be
+read as a discovery: 0.30 (`wx-vol-ceiling`, the 75th percentile of realized
+vol across the pool), 0.40, 0.45, 0.50. The base refuses nothing on absolute
+volatility at all. A threshold that beats its neighbours and is beaten by
+nothing is a dial; a spike at one rung is a fit, and this project has already
+paid for one of those -- the -40% stop fired three times, looked excellent,
+and did not survive its own neighbours.
+
+WHAT IT IS AIMED AT, and it is NOT the assignment rate. The 2026-08-16 batch
+proved assignment rate is invariant to the weather label: four arms refusing
+between 0% and 44% of candidate days landed within 1.2 points of each other,
+because assignment probability is what DELTA means. This arm is aimed at the
+DEPTH of the bad outcome instead -- the campaigns that go so far underwater
+that no covered call above net basis is writable, which is the jam measured at
+641 slot-days in the live config and the reason every assigned campaign earns
+$11.77 a slot-day against $35.93 for a clean one.
+
+THE EVIDENCE IT RESTS ON. Of 272 campaigns in the exported trade log, 266 were
+winners at a median +$181 and SIX lost -$40,328 between them -- 100% of all
+loss ever taken. Four of those six (ALB, SNAP, NIO, HOOD) sat in the top
+quintile of realized volatility, at 0.58 / 0.48 / 0.70 / 0.66 against a pool
+median of 0.231. A ceiling at 0.45 refuses 5.6% of gate-passing ticker-days
+and would have excluded all four.
+
+THE DECLARED COUNTER-ARGUMENT, and it is strong. High realized volatility is
+also where the MEAN lives: realized vol correlates +0.453 with campaign P&L,
+and the fourth quintile is the single best band in the log at +$455 a campaign.
+This arm deliberately cuts into a profitable band to remove its tail. It is
+therefore only defensible if the tail improves by more than the mean costs --
+which is what the bar below tests, and what a return column alone cannot show.
+
+WHY IT IS AFFORDABLE NOW AND WAS NOT THIS MORNING. Before the 2026-08-17
+`liq-junk-floor` promotion the candidate menu was 3.5 names against 5 slots,
+thinner than the free slots on 23.5% of sessions -- any new refusal landed on a
+pool already too short. The menu is now 11.7. That is the measurement that
+makes a veto arm worth running at all, and it is why n=6 evidence gathered a
+day ago gets a different answer today.
+
+THE BAR, DECLARED BEFORE THE RUN.
+  MECHANISM: pool_depth_mean must not fall below 5 (the arm must not
+    re-create the starvation the liquidity promotion just removed), and
+    campaigns must not fall more than 15% below the base's 142.
+  AIM (at least two of three must improve):
+    * days_uncovered, from 641
+    * pnl_per_slotday_assigned, from $11.77
+    * max_drawdown, from -22.3%
+  LADDER: judged against its neighbours, never alone. A rung that beats the
+    base while both its neighbours lose is a fit and is rejected on that
+    ground whatever its P&L.
+  NOT SUFFICIENT: total return, and not assignment_rate either -- the first is
+    one path on one window, and the second is set by delta and has been shown
+    not to respond to any weather knob.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_max_realized_vol]
+value = 0.40
+why = """
+Absolute annualised realized-volatility ceiling, one rung of the 0.30/0.40/
+0.45/0.50 ladder run together on 2026-08-17. The live gate's only volatility
+test is RELATIVE -- `vol_pctile` asks whether today is volatile FOR THAT NAME --
+so a name that is violently volatile all the time reads as calm and passes. This
+knob asks the absolute question the taxonomy never asks.
+
+Not searched: the four high-volatility names among the six campaigns that
+carried 100% of all loss sit at 0.48-0.70 against a pool median of 0.231, and
+the ladder brackets that gap at round numbers. See the note for the full case,
+the counter-argument, and the bar.
+"""
+source = "campaign log n=272 (6 losers, -$40,328); liq-junk-floor scorecard"

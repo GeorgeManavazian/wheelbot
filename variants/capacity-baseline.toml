@@ -1,0 +1,57 @@
+name = "capacity-baseline"
+question = "At the width the bot actually runs (n_slots=5), how is slot-time split between clean and assigned campaigns, what does each earn per slot-day, and does a refusal ever idle a slot?"
+base = "frozen"
+status = "testing"
+created = "2026-08-16"
+updated = "2026-08-16"
+note = """
+NOT A MECHANIC. Zero knobs, on purpose: this variant resolves byte-identical to
+`frozen`, so both arms of its scorecard are the SAME config and every metric
+delta must be exactly zero. It exists for two reasons.
+
+1. IT IS THE MEASUREMENT. The capacity metrics landed on the scorecard on
+   2026-08-16 (`bench/scorecard.py: slot_economics`), and no scorecard in the
+   repo carries them. This run puts the current live config's slot economics on
+   the record at the width the bot is actually reasoned about.
+
+2. IT IS THE REGRESSION PROOF. The counters behind those metrics
+   (`idle_slot_days`, `pool_depth_sum`, `pool_depth_sessions`,
+   `pool_starved_days` on PortfolioState/PortfolioResult) are new engine code
+   in the hot loop. `tests/engine_v2/options/test_slot_capacity.py` pins that
+   they steer no decision on stub markets; this pins it on 529 real names over
+   23 months. Any nonzero delta on this card is a bug in that claim, not a
+   finding.
+
+WHY THE OPS OVERRIDE. The shared `[ops]` is `n_slots = 1` (plain.toml:36-40,
+owner's 2026-08-09 choice). At n=1 the base arm opens 17 campaigns in 23 months
+and there is only ever one slot, so "how is slot-time split" and "was a slot
+idle" have no room to be answered -- with one slot, idle_slot_days collapses
+into days_flat and pool depth is measured against a demand of one. Five is the
+width every capacity claim in this project is stated at: the 2026-08-16
+`calls-to-expiry` promotion, the ten-arm weather batch, and the 272-campaign
+trade log all run at five. Same reasoning, same precedent as
+`call-otm-25`'s 1 -> 5 override.
+
+WHAT THE QUESTION IS FOR. Two claims in the project's own notes have never had
+a number under them:
+
+  * "Refusing a stock leaves the slot idle." The entry loop rescans all 530
+    names for every slot it fills (portfolio.py, section 2), so a refusal
+    promotes the next candidate; it can only idle a slot when the whole pool
+    comes back empty. `pool_starved_pct` counts exactly that, and
+    `idle_slot_days` counts the cost.
+  * "Assigned campaigns are the loss." On the exported best_run they are worse
+    than that: 20% of campaigns, 77% of all slot-time, -$1.02 per slot-day
+    against +$25.11 for the campaigns that stayed clean. But that export
+    predates the 2026-08-16 `calls-to-expiry` promotion (149 CLOSE_CALL rows in
+    it -- the take-profit this bot no longer takes on the call leg), so the
+    figure describes a config that no longer exists. This run replaces it.
+
+There is nothing to promote here and `status` will stay `testing` forever. If a
+future reader wants the number, re-run this card rather than trusting the one
+in the note -- that is the whole point of a scorecard.
+"""
+
+[ops]
+# OVERRIDES THE SHARED [ops] ON ONE FIELD: n_slots 1 -> 5. See the note.
+n_slots = 5

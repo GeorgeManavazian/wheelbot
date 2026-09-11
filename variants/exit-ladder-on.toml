@@ -1,0 +1,166 @@
+name = "exit-ladder-on"
+question = "When no call above net basis can be written, does giving the assigned shares a way out -- a deep ITM call, then selling the stock if even that strike breaks -- unjam the slots without turning paper losses into realised ones?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-17"
+updated = "2026-08-17"
+verdict = """
+REJECTED 2026-08-17, and the reason is NOT the rung everyone expected.
+
+Live tier, n_slots=5, engine clean, against the config promoted the same day:
+
+    days_uncovered        641 ->    93     (-85%, the jam essentially gone)
+    slotdays_assigned_pct 0.750 -> 0.652
+    campaigns             142  ->   199
+    shares_sold             0  ->     6    = 0.133 per assignment
+    ret_per_maxdd         1.03 -> -0.46
+    total_return        +22.9% -> -12.3%
+    pnl_per_slotday_assigned  +$11.77 -> -$21.99
+
+IT WORKS AS A JAM FIX AND LOSES A THIRD OF THE ACCOUNT DOING IT.
+
+The declared reject condition was "tier 3 fires on more than a third of
+assigned campaigns" -- the -40%-stop shape. IT PASSED THAT BAR. Tier 3 fired
+6 times against 45 assignments, 13.3%: deep and rare, exactly as designed. So
+the loss is not the share sales, and the pre-registered suspicion was wrong.
+
+THE DAMAGE IS TIER 2. With the ladder on, covered-call writes go 98 -> 115 but
+the credit collected on them goes $19,179 -> $53,206, median $38 -> $88. Those
+are 0.80-delta calls written BELOW net basis -- which is precisely what
+`call_min_strike = "basis"` exists to forbid, and what tier 2 is defined to
+abandon. The bot collects a fat premium and caps the stock below its own cost,
+so the recovery the wheel depends on is sold away for a one-off credit. It is
+`put_stop_mult` (falsified at every threshold, 2026-07-14) wearing a call's
+clothes: cutting the loss also cuts off the recovery.
+
+This CONFIRMS the engine's own note, which was written before any of it ran:
+the 2026-08-14 stuck-campaign review found 4 of 40 assignments never resolved
+and ate 51% of every held-day, "so a rule that fires deep and rarely is the
+shape the data asks for, and the ITM ladder is not." The ITM ladder is now
+measured, and it is not.
+
+WHAT IS STILL OPEN. The owner's actual proposal on 2026-08-17 was "liquidate
+the position if we cannot find a possible call to sell" -- tier 3 WITHOUT tier
+2. That is not what this arm ran, and it is not directly configurable: the
+ladder always attempts tier 2 first, and `exit_trigger = "never"` disables
+tier 2 but then leaves `exit_strike` unset, so `tier3_stop_hit` returns False
+on a None strike and the arm is silently inert unless `exit_stop` is also moved
+to "pct_below_basis" -- which introduces a fitted percentage on 45 events, the
+exact shape this project has falsified twice.
+
+The one threshold-free version of the owner's rule -- sell the moment no call
+above basis can be written -- is measurable in advance and looks bad: there are
+641 slot-days in the base arm where no call was writable, so that rule would
+fire on the routine case rather than the rare one, realising every paper loss
+on first contact. That is put_stop_mult again.
+
+So: this arm is rejected, the ITM ladder is rejected with it, and the exit
+problem is NOT solved. What survives is the 2026-08-16 `calls-to-expiry`
+promotion, which is the only exit change that has ever improved this bot.
+"""
+note = """
+ONE FLAG. `assignment_exit = True` and nothing else, because every other knob
+in the block already defaults to the arm being tested:
+
+    exit_trigger      "tier1_impossible"    fire when no call above basis exists
+    exit_call_delta   0.80                  the deep ITM call tier 2 writes
+    exit_stop         "spot_below_strike"   tier 3 fires below that strike
+    exit_cooldown_days 0                    no re-entry ban
+
+That is deliberate and it is the whole reason this arm is cheap: `blocks.toml`
+records that the triggers are "the previous step failed" rather than fitted
+numbers, because 31 assignments cannot support fitting thresholds. Setting one
+boolean means there is no threshold in this experiment to overfit.
+
+WHY NOW -- the owner asked the right question and it turned out to be built.
+Reviewing the fill check on 2026-08-17 the owner proposed: liquidate the
+position when no sellable call can be found, and let a call run to expiry when
+it cannot be bought back. The second is already live (`calls-to-expiry`,
+promoted 2026-08-16: CLOSE_CALL count is 0 in every arm measured since). The
+first is tier 3 of this ladder, which has sat in the engine switched off and
+without a scorecard since it was written. So this is a run, not a build.
+
+WHAT IT SHOULD FIX, with the numbers it has to move. From `liq-junk-floor`,
+live tier, n_slots=5, the config now live:
+
+    83.1% of ALL slot-time sits in campaigns that got assigned
+      641  slot-days holding shares with NO call written against them
+    $11.77 earned per slot-day while assigned, against $35.93 while clean
+
+The bot has one door out of an assigned position -- getting called away -- and
+`call_min_strike = "basis"` forbids the call that would open it whenever the
+stock has fallen far. That is the jam. This ladder is the fix that was designed
+for it and never measured.
+
+THE DECLARED COUNTER-ARGUMENT, and it is serious. Selling the shares CONVERTS A
+PAPER LOSS INTO A REALISED ONE, and this project has already falsified the
+nearest relative of that idea twice: `put_stop_mult` (cut the losing put rather
+than take assignment) was falsified at every threshold on 2026-07-14 because
+cutting the loss also cut off the recovery the wheel depends on, and the -40%
+stop fired three times, looked excellent, and did not survive its neighbours.
+Taking assignment and selling calls IS the plan, not the accident. The
+difference this arm rests on is that tier 3 fires only after tier 2 has ALSO
+failed -- the position has to be below a 0.80-delta strike written below basis
+-- so it is a deep, rare stop rather than a routine one. If it fires often, it
+is the -40% stop again and it must be rejected on that ground alone, whatever
+the P&L says.
+
+A SECOND ARM EXISTS AND IS NOT BEING RUN. `exit_trigger = "never"` gives tier 3
+WITHOUT tier 2: keep the basis floor exactly as it is and add only the deep
+stop. The engine's own comment argues FOR it -- the 2026-08-14 stuck-campaign
+review found 4 of 40 assignments never resolved and ate 51% of every held-day,
+"so a rule that fires deep and rarely is the shape the data asks for, and the
+ITM ladder is not." The owner chose the single-arm run on 2026-08-17 over a
+multi-trigger comparison, so that arm is recorded here as the named
+alternative rather than run. It needs `exit_stop = "pct_below_basis"` as well,
+because with tier 2 disabled `exit_strike` is never set and `tier3_stop_hit`
+returns False on a None strike -- i.e. the obvious one-knob version of that arm
+is silently inert, which is worth knowing before anyone tries it.
+
+THE BAR, DECLARED BEFORE THE RUN.
+  MECHANISM (must hold, or the arm did nothing and the rest is noise):
+    * SOLD_SHARES trades must appear at all -- if zero, tier 3 never fired
+    * days_uncovered must FALL from 641
+    * slotdays_assigned_pct must FALL from 0.831
+  OUTCOME:
+    * ret_per_maxdd must not worsen from 1.029
+    * campaigns must not fall below 142
+    * pnl_per_slotday_assigned must RISE from $11.77 -- this is the metric the
+      arm is actually aimed at: it is what an assigned campaign earns for the
+      time it occupies
+  REJECT REGARDLESS OF P&L IF:
+    * tier 3 fires on more than a third of assigned campaigns. A stop that
+      common is the -40% stop wearing a ladder's clothes, and the whole case
+      for it is that it is deep and rare.
+  NOT SUFFICIENT: total return alone. The liquidity ladder measured on
+    2026-08-16 came back non-monotone on ret_per_maxdd across a three-rung
+    threshold sweep, so single-window return differences on this bot are not
+    evidence of mechanism.
+"""
+
+[ops]
+# Same override and reasoning as every capacity arm this session: the shared
+# [ops] is n_slots = 1, at which 17 campaigns open in 23 months and an exit
+# mechanic that only fires on assigned stock has almost nothing to fire on.
+n_slots = 5
+
+[knobs.assignment_exit]
+value = true
+why = """
+ON. The one flag in this arm. Before it, an assigned position has exactly one
+exit -- being called away -- and `call_min_strike = "basis"` forbids the call
+that would cause it once the stock has fallen below net basis, so nothing ever
+sells the shares: 641 slot-days of the live config are spent holding stock with
+no call against it, and 83.1% of all slot-time is inside assigned campaigns
+earning $11.77 a slot-day against $35.93 for the clean ones.
+
+It never goes naked: if the short cannot be bought back, the share sale is
+REFUSED, because the account has no margin and an uncovered call is unlimited
+risk. A stuck slot for one more day is the problem we already have.
+
+Every threshold this block could have carried is left at its default, which is
+"the previous step failed" rather than a number -- 21 assignments in this
+window cannot support a fitted threshold, and a threshold not introduced is a
+real gain.
+"""
+source = "liq-junk-floor scorecard (live, n_slots=5); blocks.toml assigned-stock-exit"

@@ -1,0 +1,109 @@
+{
+ "variant": "iv-ranker-dte-21",
+ "base": "frozen",
+ "tier": "full",
+ "is_evidence": false,
+ "created": "2026-08-09T00:00:00+00:00",
+ "arms": {
+  "variant": {
+   "total_return": -0.18371099164737748,
+   "cagr": -0.049147877332566536,
+   "sharpe": -0.04512270986472668,
+   "max_drawdown": -0.402210602620926,
+   "ret_per_maxdd": -0.456753229403355,
+   "pnl": -18371.099164737752,
+   "campaigns": 1,
+   "days_flat": 69,
+   "days_uncovered": 930,
+   "n_days": 1015,
+   "by_year": {
+    "2022": -0.39626700690460204,
+    "2023": 0.25957326107867296,
+    "2024": -0.14194948810662733,
+    "2025": 0.005364419279463739,
+    "2026": 0.2682798593411393
+   },
+   "worst_year": -0.39626700690460204
+  },
+  "base": {
+   "total_return": 0.5021770000693624,
+   "cagr": 0.1063068093131212,
+   "sharpe": 0.5243423464509409,
+   "max_drawdown": -0.49026144312002096,
+   "ret_per_maxdd": 1.0243044953188871,
+   "pnl": 50217.70000693624,
+   "campaigns": 91,
+   "days_flat": 83,
+   "days_uncovered": 206,
+   "n_days": 1015,
+   "by_year": {
+    "2022": 0.06255995559081451,
+    "2023": 0.2791553123620014,
+    "2024": 0.2890402992500709,
+    "2025": 0.32191955058535315,
+    "2026": -0.3652243146453118
+   },
+   "worst_year": -0.3652243146453118
+  },
+  "buy_hold": {
+   "total_return": 0.8207476139068604,
+   "cagr": 0.16041600704193115,
+   "sharpe": 0.9650102468340577,
+   "max_drawdown": -0.18998903036117554,
+   "by_year": {
+    "2022": -0.06631022691726685,
+    "2023": 0.2481224536895752,
+    "2024": 0.23998737335205078,
+    "2025": 0.16639304161071777,
+    "2026": 0.09161710739135742
+   },
+   "worst_year": -0.06631022691726685
+  }
+ },
+ "provenance": {
+  "engine": {
+   "sha": "",
+   "branch": "",
+   "dirty": true
+  },
+  "config_hash": {
+   "variant": "",
+   "base": ""
+  },
+  "data": {
+   "hash": ""
+  },
+  "imported_from": "results/wheel_grid_n1/row05.json"
+ },
+ "conditions": {
+  "start": "2022-06-01",
+  "end": "2026-07-01",
+  "n_slots": 1,
+  "capital": 100000.0,
+  "selector": "chop",
+  "n_tickers_loaded": 530,
+  "n_tickers_requested": 531
+ },
+ "divergences": [
+  "liq_min_open_interest was None: the chain store had no open_interest column when this ran, and the flat-file OI endpoint was 403 before 2026-08-02. The live config sets 250. (The OI store has since been pulled -- commit fb196a1 -- so a re-run under `bench run` can carry all three liquidity legs.)",
+  "liq_max_rel_spread was 0.10, the value A2b turned OFF on 2026-08-11 after measuring that it refused 25 of 27 good-to-rent names on cheapness.",
+  "No held-out split (owner call 2026-08-09): every arm saw the whole window, so the winner is a RANKING selected in-sample over ten tries, not a forecast.",
+  "n_slots = 1. At n=1 the held-exclusion rule removes exactly one name from the pool, so the self-starvation that killed rank_by='iv_rank' at n=3 and n=5 in the 2026-08-05 A/B cannot fire. A win here is a win at n=1.",
+  "No engine sha, no data fingerprint, no config hash were recorded by the harness -- which is why this scorecard is stamped is_evidence = false."
+ ],
+ "wall_secs": 75.0,
+ "notes": "IMPORTED from results/wheel_grid_n1/row05.json by bench/salvage.py. Not evidence: no engine sha, no data fingerprint, no config hash was ever recorded.",
+ "schema": 1,
+ "delta": {
+  "sharpe": -0.5694650563156676,
+  "ret_per_maxdd": -1.481057724722242,
+  "total_return": -0.6858879917167399,
+  "cagr": -0.15545468664568773,
+  "max_drawdown": 0.08805084049909495,
+  "worst_year": -0.03104269225929024,
+  "pnl": -68588.79917167399,
+  "campaigns": -90.0,
+  "days_flat": -14.0,
+  "days_uncovered": 724.0
+ }
+}

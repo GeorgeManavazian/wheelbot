@@ -1,0 +1,49 @@
+name = "buffer-x-delta-pair"
+question = "Do the winning call-floor buffer and the winning call_delta compose -- does the pair beat both singles -- or are they substitutes for the same forfeited upside, in which case only one ships?"
+base = "frozen"
+status = "superseded"
+created = "2026-08-17"
+updated = "2026-08-17"
+touches = ["exit"]
+verdict = """
+SUPERSEDED 2026-08-17 (Analyzer, batch 1): build condition failed before any
+build. Both parents died in Wave 1 -- no call-otm rung passed (both rejected;
+the cliff is between 0.50 and 0.35), and the call-floor-buffer family was
+declared NO-GO without being built: the interior is bracketed at 4 points
+(base 641 uncovered days / +22.92% ... floor-off 90 / -6.15%, with the tier2
+and tier3 families in between) and P&L is monotone INCREASING in
+days_uncovered across the whole batch, so every point between the floor and
+no-floor is priced worse than base by the bracket. The interaction question
+this file pre-registered is therefore closed unrun, which is what this file
+existed to make an explicit record of.
+"""
+note = """
+PRE-REGISTERED, NOT RUN. GATE-CAMPAIGN BATCH 1 (Analyzer v2, 2026-08-17).
+This file exists so the interaction question is on the record BEFORE either
+parent is graded -- the same discipline as every declared-before-the-run bar.
+
+RUN CONDITION (both must hold, decided by the Analyzer after their waves):
+  1. a call-floor-buffer rung passes its Wave-3 bar (build-gated: fractional
+     call_min_strike does not exist in the engine yet -- see below), and
+  2. a call-otm rung (0.35 or 0.25) passes its Wave-1 bar.
+If either parent fails, this file stays draft forever and records that the
+interaction was declared untestable rather than quietly skipped.
+
+KNOBS, STATED IN PROSE BECAUSE THEY CANNOT BE STATED IN THE SCHEMA YET. The
+arm will set exactly two:
+  * call_min_strike = the passing buffer rung's fraction of net basis (0.95 /
+    0.90 / 0.80). A FLOAT here is not yet a WheelConfig value -- the current
+    field is `str | None` ("basis" or unset) -- so writing the knob today
+    would fail the bench's own type validation and break doctor. The value is
+    filled in when the Wave-3 build lands and a rung passes.
+  * call_delta = the passing call-otm rung (0.35 or 0.25).
+[ops] n_slots = 5, same width and reasoning as every batch-1 arm.
+
+THE BAR, PRE-REGISTERED: the pair must beat BOTH singles on ret_per_maxdd at
+BOTH widths (n5 and n20). Anything less means the two knobs are substitutes
+spending the same forfeited upside -- exit-pair already measured that shape
+(both-knobs worse than either single, 2026-08-16) -- and only one ships.
+"""
+
+[ops]
+n_slots = 5

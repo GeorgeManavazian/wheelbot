@@ -1,0 +1,76 @@
+name = "call-otm-35"
+question = "Does writing the covered call at 0.35 delta -- halfway between the live ATM 0.50 and the previously-measured 0.25 -- beat the live config now that calls run to expiry and the pool is three times deeper?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-17"
+updated = "2026-08-17"
+touches = ["exit"]
+verdict = """
+REJECTED 2026-08-17 (Analyzer, batch 1). call_delta 0.50->0.35 under
+hold-to-expiry. Catastrophic and mechanistic: a 0.35-delta call almost never
+gets exercised, and exercise is the only door out of assigned stock --
+campaigns collapsed 142->55, days_uncovered 1,251, no_credit 768, book ended
+with 5 stuck positions (KHC ~23 months, WDAY, BSX, ACN, NIO) ~-$47.7k
+unrealized, -30.44% total, 2026 -32.4%. Zero realized losers, all damage in
+permanent slot occupation -- the exact inverse failure of the stop family.
+The "pool depth fixed the exit-pair interaction" hypothesis is falsified:
+starvation is slot-side (held shares), not pool-side. Under
+call_take_profit_pct=1.0, call_delta=0.50 is load-bearing. KILLED at both
+rungs; revisit only if the call take-profit ever reverts.
+
+Scorecard: bench/scorecards/call-otm-35/live__208f2747074cc95f.json
+(engine 0838351260cf, dirty=false).
+"""
+note = """
+GATE-CAMPAIGN BATCH 1, WAVE 1 (Analyzer bar v2, 2026-08-17). The interior
+point of the call_delta response curve 0.50 (base) -> 0.35 -> 0.25, measured
+-- never interpolated -- alongside `call-otm-25`. This is the batch's only
+P&L-shaped arm pair, so it carries the STRICTEST bar in the batch.
+
+WHAT CHANGED -- why this knob is being measured a third time:
+  * The call-otm-25 and exit-pair cards are stale TWICE over: the
+    call_take_profit_pct=1.0 promotion (2026-08-16) and the 10/4 liquidity
+    floors (2026-08-17) both moved the base under them.
+  * The starvation mechanism that priced the last measurement (95 campaigns)
+    was measured under a 3.5-deep, 23.5%-starved pool. That pool no longer
+    exists: menu depth 11.7, starved sessions 5.0%.
+  * calls-to-expiry is now live, which MULTIPLIES the events this knob
+    prices: every call now runs to its expiry, and 70% of the 78,635 dollars
+    of forfeited upside sat in the ATM bucket.
+
+THE BAR, DECLARED BEFORE THE RUN (Analyzer, final version). PASS only if ALL:
+  * at BOTH widths (n5 and n20): total_return > base AND ret_per_maxdd > base
+  * better than base in >= 2 of 3 year-buckets (2024/2025/2026), with at
+    least one NON-2025 bucket improving
+  * days_uncovered <= 704
+  * campaigns >= 135
+  * MONOTONE response across 0.50 -> 0.35 -> 0.25: if 0.35 beats both
+    neighbours materially, it is a spike and it dies.
+
+Third measurement of the idea: a hair-pass is reported as a hair-pass, and no
+shortlist mention follows from one.
+
+SHARED BATCH RULES. Noise band: at n5, total_return within base - 10pp is
+"not degraded". Year-bucket rule: worse than base in at most 1 of 3 buckets
+by more than 3pp.
+"""
+
+[ops]
+# Same override and reasoning as call-otm-25: a mechanic that only fires on
+# assigned stock cannot be resolved at the shared n_slots = 1.
+n_slots = 5
+
+[knobs.call_delta]
+value = 0.35
+why = """
+The interior rung. 0.50 is at-the-money and is the live value; 0.25 is the
+rung measured (inconclusively, at a stale base) in call-otm-25; 0.35 is the
+midpoint that turns two points into a response CURVE. It exists to be
+measured, not interpolated: if 0.35 sits off the line through its neighbours,
+the response is a spike and the whole knob closes. The trade at this rung:
+the cap moves ~half a standard deviation off spot (keeping roughly half the
+surrendered upside the 0.25 arm chases) while collecting materially more
+premium per write than 0.25 does against the same fixed friction -- so the
+write floor refuses fewer calls and the call-away keeps freeing slots.
+"""
+source = "Analyzer batch-1 v2 (2026-08-17); call-otm-25 forfeit table (results/best_run)"

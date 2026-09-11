@@ -1,0 +1,77 @@
+name = "wx-vol-ceiling"
+question = "Does an ABSOLUTE realized-volatility ceiling beat the live gate, whose vol test is measured against each name's own history and therefore normalises away the quantity being controlled for?"
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C4 of the ten-candidate brief. THE GATE'S VOL TEST IS RELATIVE, NOT ABSOLUTE.
+
+`vol_pctile` ranks today's realized vol against THAT NAME'S OWN trailing three
+years, and `is_good_renting_weather` refuses only the top quartile of it
+(`vol == "stressed"`). Across a 530-name universe that is not a risk control, it
+is a normaliser: a 60%-vol stock sitting at its own median passes, and a 15%-vol
+stock at its own 90th percentile is refused. The engine then ranks the survivors
+by the same percentile, so the sort actively selects toward the top of whatever
+band the gate left.
+
+MEASURED SPREAD, on the 17,465 gate-passing ticker-days in this window
+(2026-08-15): realized_vol p05 0.130, p25 0.182, p50 0.231, p75 0.294, p90 0.389,
+p95 0.467. So the gate is presently admitting names whose annualised vol differs
+by a factor of three and treating them as the same weather.
+
+THE COUNTER-ARGUMENT, and it is strong. At constant delta the strike sits a
+roughly constant number of sigmas from spot, so under lognormal assumptions vol
+should NOT change assignment probability -- a 0.30-delta put is a 0.30-delta put.
+The whole claim rests on real left tails being fatter than lognormal in high-vol
+names, which is precisely what this run has to show and must not be assumed. The
+brief's supporting observation, that the six losers are high-absolute-vol names
+(ALB, SNAP, NIO, HOOD, PFE, PG), is weaker than it looks: PFE and PG are not
+high-vol names, so the pattern is at best four of six, on six events.
+
+That is also why `assignment_rate` is the metric that decides this arm and P&L is
+not. If the lognormal argument is right, assignment rate is flat across the vol
+ceiling and any P&L difference is the leverage dial, not the gate.
+
+WHY `n_slots = 5`. Shared with this family: at one slot the base arm opens 17
+campaigns in 23 months and an assignment rate on that is noise. Both arms share
+the setting.
+
+PRE-DECLARED POOL EFFECT: a 0.30 ceiling keeps 76.7% of gate-passing days, ~28 of
+~36 candidates per session against 5 slots. It should not starve the book, so an
+entry-count collapse would point at the downstream stack, not at this knob.
+
+PASS/FAIL, declared before the run. PASS requires assignment_rate to FALL
+materially (this is the mechanism claim) AND ret/DD not to worsen. A P&L
+improvement with a flat assignment rate is NOT a pass -- it is the leverage dial
+moving, and this project has already been misled once by reading that as skill.
+If it passes, the neighbours 0.25 and 0.40 must agree before it is promotable:
+non-monotone neighbours is the -40% stop's failure mode and kills the arm.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_max_realized_vol]
+value = 0.3
+why = """
+Refuse an entry whose 21-day annualised realized vol exceeds 30%.
+
+Chosen as a MEASURED PERCENTILE, not a searched value: 0.294 is the 75th
+percentile of realized vol across the 17,465 ticker-days this gate currently
+admits in this window, and 0.30 is the round number beside it. So the knob is
+defined as "refuse the top quarter of the pool by absolute volatility" -- a
+statement about the pool that can be re-derived, rather than a number that
+happened to score well.
+
+It also keeps 76.7% of gate-passing days, comfortably above the ~60% entry-count
+floor the brief sets as a kill criterion, so a failure here should be a failure
+of the mechanism and not of slot starvation.
+
+Deliberately NOT swept. 54 assigned campaigns cannot support a tuned threshold;
+the -40% stop is what happens when one is tuned anyway. If 0.30 passes, 0.25 and
+0.40 are run next and must agree.
+"""
+since = "2026-08-15"
+source = "p75 of gate-passing realized_vol, live tier window, measured 2026-08-15"

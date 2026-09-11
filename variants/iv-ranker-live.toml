@@ -1,0 +1,77 @@
+name = "iv-ranker-live"
+question = "Does rank_by=iv_rank beat frozen's vol_pctile at live tier, n5, the 531-name pool -- graded for real this time (archive card was smoke-tier, no engine sha)?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-22"
+updated = "2026-08-22"
+touches = ["ranking"]
+verdict = """
+REJECTED 2026-08-22, live tier, on the pre-registered ship bar, resolving the 2026-08-08 'ship it' ruling to KILL. Engine 7a443ec56348 clean, data 23ea0ae5dd82afbc, 529/531; card live__8c3f8c1210e1b570.json; bars registered in the batch-5 proposal before the run and owner-approved as written.
+
+n5 (100k): +10.05% vs frozen +22.92% vs SPY +37.34%. Sharpe 0.35 vs 0.72; ret/maxDD 0.47 vs 1.03; by_year -3.01/+23.06/-6.15 (2025-carried). The ship bar required >= SPY at n5; it missed by 27.29pp. The frozen gap (-12.87pp) sits INSIDE the A-1b 15pp band and the widths disagree in sign (n20 half is +4.45pp), so under the registered rule the vs-frozen reading is open-book noise: not evidence of superiority, kill stands, vol_pctile stands as the evidenced default.
+
+MECHANISM CLEAN: entry_ranked_iv_unknown = 1; 13/547 tickers NEUTRAL (~2.4%, zero in-window IV history, pre-flight-verified); book differs materially from frozen. The run is evidence.
+
+THE DURABLE FACT THIS RUN BOUGHT: the 2026-08-05 self-starvation mechanism is DEAD at depth 531 -- idle_slot_days 1 (vs 452 at 154 names), slot_fill 1.000, pool_starved 0.010. What remains at n5 is a different signature: campaigns 113 vs 142 at FULL occupancy, days_uncovered 812 vs 641, assignment_rate flat -- the batch-4 turnover-speed channel (vol_pctile's top slice cycles fastest), read as mechanism-consistent, not certified (in-band, width-incoherent). IV rank has now failed as a veto (2026-08-04), as a 154-name ranker (2026-08-05), and as a live-tier ranker at both widths against its real bar. Three instruments, one signal, no deployment. Retire the 'Ship the IV ranker' memory ruling.
+"""
+note = """
+Batch 5, Arm 1 (owner-mandated 2026-08-22). n5 width; paired with
+iv-ranker-live-n20 (n20, 400k) -- the bar reads BOTH widths together.
+Zero engine build: rank_by="iv_rank" already exists (portfolio.py:313/780,
+validated :1056, fail-loud on missing IV history). Supersedes the archive
+card variants/_archive/iv-ranker.toml, which is smoke-tier (tier="full",
+n_slots=1, no engine sha, no data hash, is_evidence=false) and unusable.
+
+Bar, as registered in the proposal (verbatim, both widths read together):
+
+MECHANISM (or the run is not evidence): `entry_ranked_iv_unknown` must be a
+small share of ranked candidates -- if most names rank NEUTRAL 0.5 the sort
+degenerated. Traded book must differ materially from frozen's. Card reports
+campaigns, days_uncovered, assignment_rate, slot occupancy / idle slot-days
+(the 2026-08-05 starvation diagnostics, first measurement at depth 531).
+
+SHIP BAR (resolves the 2026-08-08 ruling): total return ≥ SPY +37.34% at
+n5, not one-year-carried, n20 within 8pp of frozen n20. Anything less ⇒
+KILL: `rank_by="iv_rank"` archived rejected, vol_pctile stands as evidenced
+default.
+
+SECONDARY (exploration fact, not a ship claim): materially better than
+frozen outside both noise bands, year-bucket coherent, A-5-surviving ⇒
+"iv_rank carries selection signal beyond vol_pctile" -- feeds a Batch-6
+proposal at the owner's gate. Within bands or one width only ⇒ not
+evidence; kill stands.
+
+Registered prediction (proposal, section 1): fails ship bar ~95%; vs frozen
+uncertain (starvation term unmeasured at this depth) -- predicted inside the
+15pp band at n5, campaigns < 142, Sharpe ≤ frozen, n20 within 8pp.
+Predicted outcome: ruling resolves to KILL; informative residue =
+starvation-at-depth measurement.
+
+Pre-flight IV coverage check (Builder, 2026-08-22, this run): data/live/grid_iv/d0.3_dte11.parquet
+(matches frozen's put_delta=0.3/target_dte=11) covers 534 of the 547-symbol
+universe.py regex match; 13 tickers (EWZ, SIRI, PLUG, CHPT, GPRO, PARA, AMCR,
+DD, FLEX, FTV, DOC, NVR, WBA) have zero IV history rows in the 2024-08-01 ->
+2026-07-01 window and will rank NEUTRAL 0.5 -- a small share (~2.4%) of the
+pool, not a degenerate sort. Verified, not assumed.
+
+Source: vault/10 Live Paper Bot/2026-08-22 -- Batch 5 proposal, selection metric.md, section 1.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.rank_by]
+value = "iv_rank"
+why = """
+Rank the candidate pool by IV RANK (12-month percentile of implied vol)
+instead of realized-vol percentile. Never graded properly: the only prior
+card is smoke-tier (variants/_archive/iv-ranker.toml, tier="full", n_slots=1,
+no engine sha, no data hash, is_evidence=false). Real prior evidence
+(2026-08-05, 154-name pool): lost at n3/n5 via self-starvation (idle
+slot-days 452 vs 38), won total-return at n1 -- and the 2026-08-06
+correction noted the starvation penalty is pool-depth dependent and
+unmeasured at 531 names (overlap 140; a 3.4x deeper pool should weaken it
+substantially). This run is the first measurement at that depth and
+resolves the stale 2026-08-08 "ship it" ruling either way.
+"""
+source = "Batch 5 proposal (2026-08-22), Arm 1, owner-mandated"

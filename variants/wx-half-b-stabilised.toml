@@ -1,0 +1,69 @@
+name = "wx-half-b-stabilised"
+question = "Do the two strongest independent arguments compose -- half B, entered only once the dip has turned -- or is a better score on a much smaller book just evidence of a fit?"
+base = "wx-half-b"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C10 of the ten-candidate brief. THE COMPOSITION, AND THE TEST THAT IT IS NOT A
+FIT.
+
+C1 says take the right half of the residual bucket. C9 says wait for the dip to
+turn. The arguments are independent -- one is about which regime, the other about
+when inside it -- so if both effects are real this should be the cleanest arm on
+the list.
+
+It is also the arm most likely to look best for the wrong reason, and the brief
+says so in advance: "if it is much better than either alone on a small count,
+that is evidence of a fit rather than of composition."
+
+MEASURED, BEFORE THE RUN (2026-08-15, 17,465 gate-passing ticker-days): half B
+alone is 24.4% of them, the turn alone is 6.0%, and the intersection is 4.5% --
+about 1.6 candidates per session against 5 slots. So the book here is not merely
+smaller, it is structurally unable to fill. THIS ARM IS EXPECTED TO SPEND MOST
+SESSIONS FLAT.
+
+Note what the intersection number also says about independence. If the two
+conditions were independent the intersection would be 24.4% x 6.0% = 1.5% of the
+pool; it is 4.5%, three times that. Put the other way: the turn fires on 18.4% of
+half-B days against 6.0% of all days. The two are POSITIVELY correlated, in the
+expected direction -- a name below its 200-day mean is more likely to be below
+its 21-day mean too -- so the composition buys materially less independent
+information than "two independent arguments" implies. That weakens the case for
+this arm before it runs, and it is written here rather than discovered in the
+scorecard.
+
+BASED ON `wx-half-b`, NOT ON `frozen`: the diff that defines this paragraph is
+the turn, so `bench diff` shows one knob and the lineage records that the half
+came from C1. That makes `wx-half-b` the DEFAULT BASE ARM, which answers "does
+the turn add anything to C1". The headline run is therefore taken with
+`--base frozen`, so the comparison the brief asks for -- against the live bot --
+is the one on the scorecard; the run against `wx-half-b` is taken second and
+answers the composition question.
+
+WHY `n_slots = 5`. Inherited from `wx-half-b`. Load-bearing: at one slot, 1.6
+candidates a session would still fill the book most days and the structural
+starvation would be invisible.
+
+PASS/FAIL, declared before the run. FAIL on entry count below ~60% of base --
+expected. FAIL if it beats BOTH `wx-half-b` and `wx-stabilised` on a campaign
+count materially smaller than either: that is the signature of a fit, and it is
+the specific reason this arm exists as a check rather than as a proposal.
+"""
+
+[knobs.chop_require_fast_turn]
+value = true
+why = """
+The C9 condition, applied on top of the C1 half: enter only when the close is
+below its 21-day mean AND the 9-day mean has risen over the last 3 sessions.
+
+Same reasoning as `wx-stabilised` -- two directional conditions, no fitted
+threshold. What is different here is the interaction, which is the whole point of
+this arm and is measured rather than assumed: the two conditions are positively
+correlated, so the intersection (4.5% of gate-passing days) is smaller than the
+product of the two shares (24.4% x 6.0% = 1.5%) would suggest but far smaller
+than either alone.
+"""
+since = "2026-08-15"
+source = "2026-08-15 -- Weather-gate labelling, ten candidates, build brief"

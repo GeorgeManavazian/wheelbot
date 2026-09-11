@@ -1,0 +1,71 @@
+name = "wx-ma50-slope"
+question = "Does requiring the 50-day mean to be rising beat comparing it to the 200-day mean, given that a level comparison over a 200-day window can be months out of date?"
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C6 of the ten-candidate brief. SLOPE IS THE CURRENT FACT; LEVEL IS HISTORY.
+
+`sma50 > sma200` is a comparison of two LEVELS, one of which averages 200 days.
+A 50-day mean that sits above the 200-day but is FALLING is a name in the act of
+breaking down, and the label treats it identically to one that is recovering.
+That is not a subtle case: it is the whole left half of every rollover.
+
+MEASURED on the 17,465 gate-passing ticker-days (2026-08-15): the 10-day slope of
+the 50-day mean runs p05 -0.023, p25 -0.005, p50 +0.007, p75 +0.021, p95 +0.046.
+So roughly a third of currently-admitted days carry a falling 50-day mean, and
+the gate cannot see it.
+
+THE COUNTER, and it sets the pass bar. Slope is noisier than level and it adds a
+lookback window that is itself a free parameter -- which is how a "current fact"
+becomes a fitted one. The mitigation is that the window is checked for a PLATEAU
+rather than picked: 5, 10 and 20 days are all precomputed, this arm runs 10, and
+a pass is only a pass if 5 and 20 agree. A result that lives at exactly one
+window is a fit and dies.
+
+WHY `n_slots = 5`. Shared with this family. Both arms share the setting.
+
+PRE-DECLARED POOL EFFECT: `slope >= 0` at 10 days keeps 64.7% of gate-passing
+days, ~24 of ~36 candidates per session against 5 slots.
+
+PASS/FAIL, declared before the run. FAIL on entry count below ~60% of base. PASS
+requires ret/DD improvement AND agreement from the 5-day and 20-day windows --
+declared here, run only if this arm passes, so the plateau check is a real test
+and not three attempts at one result.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_min_ma50_slope]
+value = 0.0
+why = """
+Refuse an entry whose 50-day mean has fallen over the last 10 sessions.
+
+ZERO, not a tuned number, and that is the point. The claim is directional -- "not
+falling" -- and zero is the only value that states it without inventing a
+tolerance. Any nonzero threshold here would be a second free parameter on top of
+the window, on a sample of 54 assigned campaigns, which is exactly the shape of
+the -40% stop.
+
+It also lands near the middle of the measured distribution (p50 of the 10-day
+slope is +0.007 across gate-passing days), so it splits the pool roughly two to
+one rather than trimming an extreme -- a test of the mechanism, not of scarcity.
+"""
+since = "2026-08-15"
+
+[knobs.chop_ma50_slope_window]
+value = 10
+why = """
+The middle of the three precomputed windows (5, 10, 20). 10 sessions is two
+trading weeks: long enough that a single day cannot flip the verdict, short
+enough that it is still a statement about now rather than about the quarter.
+
+It is stated as the MIDDLE of a plateau to be checked, not as a chosen best. If
+this arm passes, 5 and 20 are run and must agree; a result that exists only at 10
+is a fit on the window, which is the specific risk this candidate carries and the
+counter-argument recorded against it in the brief.
+"""
+since = "2026-08-15"

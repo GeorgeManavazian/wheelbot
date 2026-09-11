@@ -1,0 +1,62 @@
+name = "wx-no-label-control"
+question = "With the chop label removed and NOTHING put in its place, how much worse is the bot? This is the floor the other candidates have to beat, and without it their numbers mean nothing."
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C12 of the ten-candidate brief. THE CONTROL. Run it or the rest means nothing.
+
+Two controls are needed to bound this exercise. The first is the live gate as it
+stands, and that comes free -- it is the base arm of every run in this family.
+The second is this one: the gate with the chop test removed and no replacement,
+keeping only the volatility refusal and the existing down-leg guard.
+
+WHAT IT IS FOR. Every candidate arm reports a number against the live gate, and
+a number against one reference point is not a measurement. This gives the other
+end of the ruler:
+
+  * If `wx-no-taxonomy` (three direct facts, no label) does not beat THIS arm,
+    the three facts are not carrying the load either, and the whole re-labelling
+    exercise is measuring noise.
+  * If THIS arm is close to the live gate, the label is not doing much, and a
+    candidate that improves on the live gate by a small margin is improving on
+    something that barely exists.
+  * If THIS arm is far worse than the live gate, the label IS load-bearing, and
+    that is the strongest thing that could be said for the current design -- it
+    would be the first direct evidence the gate earns its place, which no run in
+    this project has ever produced.
+
+The last case is the one worth being clear about in advance, because it is the
+outcome that makes the answer "leave the gate alone", and this family of arms
+would then have measured the value of the thing it set out to replace.
+
+WHY `n_slots = 5`. Shared with this family. Both arms share the setting.
+
+PRE-DECLARED: this arm admits strictly MORE names than the base (removing a
+refusal cannot remove candidates), so entry count must rise and days_flat must
+fall. If either moves the other way, the run is wrong, not the strategy.
+
+PASS/FAIL: none. A control is not promotable and is not a proposal. Its status
+stays `testing` permanently and its verdict is the sentence that goes into the
+report about what the label is worth.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_drop_trend_label]
+value = true
+why = """
+Stop consulting `trend`, and put nothing in its place. The volatility refusal
+(`vol == "stressed"`) and the inherited down-only fast guard
+(`chop_max_fast_fall = 0.01`) both stay, because removing them too would test
+three changes at once and answer none of them.
+
+This is the ONLY knob this variant sets, deliberately. A control that carries a
+replacement is not a control -- `wx-no-taxonomy` is that arm, and the pair only
+means something because this one is empty.
+"""
+since = "2026-08-15"
+source = "2026-08-15 -- Weather-gate labelling, ten candidates, build brief"

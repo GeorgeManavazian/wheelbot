@@ -1,0 +1,62 @@
+name = "rank-none-control"
+question = "With the vol_pctile sort deleted -- universe-order fill among gate-passers -- does the wheel lose anything at all? The clean inertness control for the selection axis, n5 half."
+base = "frozen"
+status = "rejected"
+created = "2026-08-18"
+updated = "2026-08-18"
+touches = ["entry"]
+verdict = """
+REJECTED-AS-INERT-CANDIDATE 2026-08-18 (Analyzer, batch 4; bench status
+"rejected" -- the control did its job, the answer just wasn't the one the
+readiness report flagged as seductive). Bar required <=15pp gap at n5 to
+certify vol_pctile inert. Actual: +1.77% vs frozen +22.92%, a 21.15pp gap --
+well outside the band, and in the same direction as the n20 leg
+(rank-none-control-n20, -8.65% vs +0.19%, 8.84pp gap, also outside its 8pp
+bar). MATERIALLY WORSE AT BOTH WIDTHS: vol_pctile carries real selection
+signal; it is not decoration and not a tie-breaker.
+
+MECHANISM (fill_check + campaign counters, not just the topline number):
+entries collapse 240->170, campaigns 142->79, assignment_rate rises
+0.197->0.329, days_uncovered rises 641->1034 -- with rank_by="none" and
+gate-passers filling in fixed universe order, capital lands more often on
+names that go on to get assigned (stock closes below strike), which ties up
+a slot far longer than a clean expiry or early take-profit. vol_pctile
+selection is measurably avoiding assignment-prone names among the
+gate-passers, not just picking a fill order among interchangeable ones.
+
+Seductive-answer rule: the flattering answer here would have been "the
+ranking is decoration, the bot is simpler than we thought" -- that is what
+got flagged for an adversarial-replication surcharge in the pre-run
+readiness report. The result went the OTHER way (ranking matters), so the
+surcharge does not block certification; a result that survives against the
+owner-flattering prior needs no extra scrutiny to be believed less.
+
+Read together with rank-none-control-n20 and prefer-slice-6-10: campaign
+certification does NOT assemble on the "ordering carries nothing" branch.
+Selection is a live axis; the campaign closes on the other branch instead
+-- see [[2026-08-18 — Batch 4, the ranking is real, campaign certified with a live selection axis open]].
+"""
+note = """
+RUNS ONLY ON OWNER SIGN-OFF. Batch 4 is a PROPOSAL at the owner's gate (batch-3 terminal state: shortlist empty, campaign paused); this file is a pre-registration in the buffer-x-delta-pair pattern -- the question and bar go on the record before any run, and the run happens only if the owner opens the gate.
+
+THE CONTROL THE SLICES COULD NOT BE. Batch-3's rank slices confounded ordering with starvation (a 5-name window against an 11.7-deep pool, empty 86-229 days). This arm deletes the vol_pctile SORT instead: gate-passers fill slots in fixed universe order, every candidate stays in the pool, nothing ever starves. Whatever it measures is ordering signal alone.
+
+THE BAR, REGISTERED NOW (both controls read together): if rank-none-control lands within noise of frozen at BOTH widths (<=15pp at n5, <=8pp at n20), the vol_pctile ranking is certified INERT -- selection closes and the full campaign certification assembles (Batch 1: exit closed; Batch 2: spine family under SPY; Batch 3: slices starvation-confounded; Batch 4: ordering itself carries nothing). If it is MATERIALLY WORSE at both widths, vol_pctile has real signal and the batch-3 slice results were starvation artifacts on top of a live axis. The preference-form arm separates the remaining ambiguity: it re-orders without ever starving, so any gap it shows IS ordering signal, clean of the window_empty confound (86-229 starved days on the batch-3 slices).
+
+KNOBS, IN PROSE (nothing is built; the schema cannot express this yet): requires one closed-set value on an existing knob -- rank_by = "none" (fill in universe tie-order among gate-passers; the sort key becomes a constant so the fixed tie order decides). One engine line plus validation plus tests, built ONLY if the owner opens the gate. No threshold, no window, no new mechanism -- the deletion of one.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.rank_by]
+value = "none"
+why = """
+The measurement instrument, not a strategy: delete the vol_pctile sort -- the
+key becomes a constant and gate-passers fill slots in the FIXED universe order
+(the pool's tie-order, market.universe.index). Every candidate stays in the
+pool, nothing can starve, so any gap against frozen is ordering signal alone.
+Closed-set value on the existing knob, refused elsewhere. Built and tested
+2026-08-18 (BUILD A batch 4, test_rank_none.py, 5 cases).
+"""
+source = "Batch-4 pre-registration (batch-3 close, 2026-08-18); owner gate opened 2026-08-18"

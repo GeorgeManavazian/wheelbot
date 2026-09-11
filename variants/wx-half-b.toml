@@ -1,0 +1,84 @@
+name = "wx-half-b"
+question = "Does keeping only half B of the chop bucket -- below the 200d, 50d above the 200d -- beat the live gate, which issues one label to two opposite states?"
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C1 of the ten-candidate brief. THE MINIMUM HONEST FIX.
+
+`state.py` labels a name "chop" whenever it is neither a clean uptrend nor a
+clean downtrend, so the label is a RESIDUAL and it merges two near-opposite
+states:
+
+    A  above the 200d, 50d BELOW the 200d   -- recovering off a downtrend
+    B  BELOW the 200d, 50d above the 200d   -- a dip inside an intact uptrend
+
+Inside chop these are exhaustive and mutually exclusive (in A sma50 < sma200 < c,
+in B c < sma200 < sma50), which is also why `px_vs_200` and `px_vs_50` are the
+same test there and why "above the 200 and below the 50" cannot happen.
+
+MEASURED ON 272 REALIZED CAMPAIGNS (2026-08-15):
+
+    half   n     assigned   total P&L    per campaign
+    A      202     22.3%     +11,250        +56
+    B       70     12.9%     +24,254       +346
+
+B was profitable in 5 of 5 years; A was negative in 2 of 5 and takes 80% of its
+total from 2023 alone. None of the six losing campaigns came from B.
+
+THE HONEST STATISTICS, so this is not oversold. The per-campaign gap of $291 is
+permutation-significant (p=0.036). The assignment-rate gap is marginal (p=0.089).
+The MEDIAN P&L gap is $12 and is NOT significant (p=0.260), and 0-of-6-losers is
+not significant alone (p=0.168). B does not win more on a typical trade; B avoids
+the disasters. That is worth buying given six losers carry the strategy, but it
+is a tail claim, not a per-trade edge.
+
+WHY THE LOG COULD NOT ANSWER THIS AND A BACKTEST CAN. The 272 campaigns are the
+ones the CURRENT gate admitted. Re-labelling them says what would have happened
+had those same trades been split differently; it cannot say what a gate that
+picks a DIFFERENT BOOK would have earned, because the alternative book was never
+traded. That is the whole reason this is a variant and not another log slice.
+
+PRE-DECLARED, from the pool measurement of 2026-08-15 (17,465 gate-passing
+ticker-days over 508 names in this window, ~36 candidates per session):
+half B is 24.4% of them, ~8.9 candidates per session against 5 slots. So this
+should NOT starve the book -- and if entry count falls by more than the pool
+share implies, the binding constraint is the liquidity/earnings/yield stack
+downstream, not the weather label.
+
+WHY `n_slots = 5` AND NOT THE OWNER'S 1. A weather gate is a SELECTION rule, and
+at one slot the bench opens 17 campaigns in 23 months on the base arm (measured
+2026-08-15, live tier) -- an assignment rate computed on that is noise, and
+"entry count / slot utilisation", the brief's first criterion, is undefined when
+there is one slot to utilise. This is the defect recorded in `call-otm-25`'s
+verdict ("THE BAR SHOULD HAVE CARRIED A SAMPLE FLOOR AND DID NOT"), fixed in
+advance rather than after the fact. Both arms of every run below share this
+setting, so the comparison is fair; what it costs is comparability with the
+existing n=1 scorecard corpus, which is stated here rather than discovered later.
+
+PASS/FAIL, declared before the run. PRIMARY, in order: (1) entries per year and
+days_flat -- a gate that starves fails whatever its per-trade quality;
+(2) assignment_rate, the gate's actual job and the only mechanism count with
+real power at this sample; (3) ret/DD and Sharpe; (4) P&L last, year by year,
+never as one blended number. FAIL on entry count below ~60% of the base arm, or
+on a result that depends on fewer than 10 assignments.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_half]
+value = "B"
+why = """
+"B" = below the 200d with the 50d above it: a dip inside an intact uptrend. The
+side of the residual bucket that assigned at 12.9% rather than 22.3% and carried
+none of the six losing campaigns.
+
+Not a fitted value. There are exactly two halves and this picks one; the other
+runs as `wx-half-a` would if the result demanded it. There is no threshold here
+to tune, which is the main thing this candidate has going for it against C4-C8.
+"""
+since = "2026-08-15"
+source = "2026-08-15 -- The exit is the covered call, and chop is two states"

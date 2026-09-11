@@ -1,0 +1,52 @@
+name = "vrp-viable-n20"
+question = "The vrp-viable blend at the second width (n20, 400k) -- the joint bar reads both widths together; candidate status requires both."
+base = "frozen"
+status = "rejected"
+created = "2026-08-22"
+updated = "2026-08-22"
+touches = ["entry"]
+verdict = """
+REJECTED as a candidate 2026-08-22; its own width clause PASSED and the joint bar failed (see vrp-viable.toml; same engine/data pins; card live__044ad1c357716a5b.json).
+
+n20: +9.36% vs frozen n20 +0.19% -- +9.17pp, the first rank-family delta outside the A-1b 8pp band on the favorable side -- and still -27.98pp under SPY. Seductive-answer surcharge applied and it does not survive as signal: the entire beat is the 2025 bucket (+13.07 vs -4.78); 2024 AND 2026 are both worse than frozen; worst_year worse (-5.87 vs -4.78); width-uncorroborated (n5 points the opposite way); 20 open campaigns at window end, no mark decomposition; and component-confounded -- tier-1 is floor-AND-VRP jointly, so nothing here attributes the gain between the 30%-yield floor and the VRP ordering.
+
+WHAT IS RECORDED AS FACT (process diagnostics, window-integrated, more robust than the endpoint return): in the jam-saturated deep book (84% of slot-days assigned, pool depth 7.9 under 20 slots), putting pay-viable names at the front of the queue produced campaigns 441 vs 377, days_uncovered 3254 vs 4073, mean campaign 21.27d vs 24.94d, pnl_per_slotday_clean $38.72 vs $30.09, maxDD -20.16% vs -22.23%. HANDED TO PHASE 4 as an input to the sizing/deep-book question -- not a selection candidate. The clean ablation, if ever wanted, is floor-WITHOUT-VRP (viable tier in vol_pctile order), one mechanic, both widths.
+"""
+note = """
+BATCH 5 ARM 2, n20 HALF. Paired file for the second width (capacity-n20
+pattern; card filename is knobs-hash only, one fresh card per variant). The
+full registration -- design, mechanism clauses, outcome clauses, candidate and
+promote bars, killed-stays-killed review, predictions -- lives in
+vrp-viable.toml and is NOT duplicated here; this file registers only what is
+width-specific.
+
+WIDTH-SPECIFIC CLAUSES:
+  * OUTCOME: n20 total return >= frozen n20 (+0.19%).
+  * MECHANISM: entry_ranked_vrp_unknown ~0; viable-tier daily share reported;
+    book differs materially from frozen n20.
+  * SLOW-CYCLE WATCH references at this width: frozen n20 campaigns 377,
+    days_uncovered 4073, idle_slot_days 99, slot_fill 0.990. Same registered
+    interpretation as the n5 file.
+  * A-1b band at this width: deltas <= 8pp vs +0.19% are open-book noise
+    unless both widths + year-buckets agree.
+
+REGISTERED PREDICTION (Analyzer, before build): total return between -4pp and
++8pp of frozen n20's +0.19% -- pricing sorts measured less harmful at this
+width (iv_rank n20 was +4.45pp, in-band) -- and nowhere near SPY +37.34%; the
+batch-2 width certification (the strategy has no width in this family) is
+expected to stand regardless of sort key.
+"""
+
+[ops]
+# Width pair: 20 slots at $20k/slot (capacity-n20 pattern).
+n_slots = 20
+capital = 400000.0
+
+[knobs.rank_by]
+value = "vrp_viable"
+why = """
+Same two-tier re-ordering as vrp-viable.toml, at the second width. See that
+file for the full registration.
+"""
+since = "2026-08-22"
+source = "vrp-ranker verdict (2026-08-17), licensed follow-up; batch-5 registration"

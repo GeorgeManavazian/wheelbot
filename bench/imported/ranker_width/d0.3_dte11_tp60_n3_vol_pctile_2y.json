@@ -1,0 +1,26 @@
+{
+ "tag": "d0.3_dte11_tp60_n3_vol_pctile_2y",
+ "put_delta": 0.3,
+ "target_dte": 11,
+ "take_profit": 0.6,
+ "n_slots": 3,
+ "rank_by": "vol_pctile",
+ "total": 0.1668379075789308,
+ "cagr": 0.0807018507735715,
+ "sharpe": 0.47044024285253677,
+ "maxdd": -0.2526970075707804,
+ "ret_per_dd": 0.6602290592309429,
+ "campaigns": 75,
+ "days_flat": 0,
+ "days_uncovered": 624,
+ "n_days": 501,
+ "neutral_ranks": 0,
+ "gated_size": 0,
+ "gated_illiquid": 1420,
+ "by_year": {
+  "2024": 0.0017251102567890086,
+  "2025": 0.15589766062940758,
+  "2026": 0.007600800636464511
+ },
+ "secs": 37.1
+}

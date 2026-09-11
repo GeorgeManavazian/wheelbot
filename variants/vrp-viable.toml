@@ -1,0 +1,108 @@
+name = "vrp-viable"
+question = "Among names whose premium already clears a real floor, does price-paid information (VRP) reorder them profitably -- the blend the vrp-ranker verdict licensed, at the width the bot runs?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-22"
+updated = "2026-08-22"
+touches = ["entry"]
+verdict = """
+REJECTED 2026-08-22 on its own registered bar, mechanism clause first: campaigns 109 vs the required >= 142 -- the exact clause pre-declared as falsifying the blend's mechanism outright, no excuses. Engine 19727bec9d17 clean, data 2a6272b2cf636acb, 529/531, card live__044ad1c357716a5b.json, is_evidence=true.
+
+n5: +8.42% vs frozen +22.92% vs SPY +37.34%. Sharpe 0.329 vs 0.719; ret/maxDD 0.392 vs 1.029 (clause FAIL); pnl_per_slotday_clean $31.76 vs required $32.34 (FAIL by $0.58 -- a hair-miss is a miss); total-return band clause passed by 0.50pp (a hair-pass is a hair-pass). by_year -2.94/+16.46/-4.35. Mechanism otherwise clean: unknowns 0, rank_viable_share_mean 0.458, book differs materially.
+
+THE FINDING THAT OUTLIVES THE ARM. The viable tier is a markup-per-day floor (annualized credit yield >= 30%), i.e. the cure-shaped component for the slow-cycle disease -- and with it in place the n5 jam was the WORST of the three pricing sorts: days_uncovered 984 vs pure-vrp 894 vs iv_rank 812, campaigns 109 vs 100 vs 113, mean campaign 21.73d vs frozen 16.68d, $/slot-day-assigned $8.51 vs $11.77. The slowness lives in post-assignment recovery time, which entry-side pricing cannot see; the premium richness pricing metrics harvest is compensation for exactly the slow-recovery states this engine converts into time-in-jam. SEPARABILITY VERDICT: inseparable as measured at the live width. Third and final instrument on the pricing-sort family; the family closes.
+"""
+note = """
+BATCH 5 ARM 2, owner-approved 2026-08-22 with eyes-open framing (expected
+outcome rejection ~90%; the purchase is family closure plus one durable
+mechanism fact). Registered BEFORE the build; the proposal's bar was
+proposed-not-registered, so this text is the registration of record. Nothing
+below weakens the proposed bar; the days_uncovered clause is ADDED (stricter),
+after Arm 1 (iv-ranker-live) showed turnover dies through cycle time at full
+slot occupancy -- the failure channel a premium floor does not defend.
+
+WHY THIS ARM EXISTS. The vrp-ranker verdict (rejected 2026-08-17) left one
+follow-up standing in writing: "rank on VRP among names whose credit clears a
+real premium floor... a different arm with a different bar." Its surviving
+measurement is un-falsified: over 10,528 gate-passing ticker-days IV/RV runs
+1.620 -> 0.998 monotone from calmest to jumpiest realized-vol decile, and
+vol_pctile's picks carry median IV/RV 1.098 against a pool median of 1.226 --
+the bot is systematically the buyer of the worst-priced risk in its own
+candidate set. Pure VRP died on slot economics (campaigns 142 -> 100, thin
+credits). This blend holds slot economics fixed and asks only the residual
+question. Killed-stays-killed review: pure VRP sort is NOT re-run here; the
+viable-tier blend is a different instrument with its own registered bar, named
+in the killing verdict itself.
+
+THE DESIGN, PINNED TO KILL TUNING. One threshold, one rung, NEVER swept:
+viable = annualized credit yield on collateral >= 30%, pinned to the measured
+0.30-delta median (30.9%, yield-floor work) -- "at least median pay for this
+delta", a prior measurement, not a fitted number. Viable tier sorts by VRP
+descending, front of queue; everyone else behind in ordinary vol_pctile order;
+full-pool fallback (the prefer_chop_half shape -- a preference cannot starve
+and cannot refuse).
+
+THE BAR, REGISTERED NOW (both widths read together; A-1b and A-5 in force;
+verdicts live tier only, window 2024-08-01 -> 2026-07-01).
+
+MECHANISM (or the run is not evidence):
+  * campaigns >= 142 at n5 -- the exact clause that killed pure VRP. The
+    design exists to hold it, so a miss falsifies the blend's mechanism
+    outright, no excuses.
+  * entry_ranked_vrp_unknown must be ~0 (13 known zero-IV tickers rank
+    NEUTRAL, ~2.4% of pool -- at or below that share).
+  * the viable tier must be non-trivially populated, with its daily share of
+    the pool REPORTED on the card -- an empty or near-empty tier means the
+    sort degenerated to vol_pctile and the run answers nothing.
+  * the traded book must differ materially from frozen's -- same picks means
+    the statistic did nothing and the result is not evidence either direction.
+  * SLOW-CYCLE WATCH (named after Arm 1): report campaigns, days_uncovered,
+    and mean campaign length vs frozen (142 / 641 at n5). Registered
+    interpretation, both directions: days_uncovered materially above 641 while
+    campaigns hold >= 142 => the slow-cycle channel is confirmed GENERIC to
+    price-of-risk sorting (third instrument: vrp 894, iv_rank 812); flat or
+    better on both => the premium floor is shown to buy back the cycle speed
+    the pure sorts lost, a mechanism fact even if outcome clauses fail.
+
+OUTCOME (all clauses verbatim from the proposal):
+  * ret/maxDD > 1.029
+  * pnl_per_slotday_clean >= 90% of $35.93 (>= $32.34)
+  * total return at n5 not below frozen's A-1b band: >= +7.92% (frozen
+    +22.92% minus 15pp)
+  * n20 total return >= frozen n20 (+0.19%)
+
+CANDIDATE STATUS (unchanged, plus one ADDED clause): materially better than
+frozen outside the noise bands at BOTH widths (>15pp n5, >8pp n20), >=2/3
+year-buckets including a non-2025 bucket, survives A-5 removal of its single
+largest open mark, AND (added, stricter, committed before the run at frozen
++10%) days_uncovered at n5 <= 705 -- a candidate may not buy its return with
+more time under assignment jam.
+
+PROMOTE BAR (unchanged and out of reach of anything less): >= SPY +37.34% at
+both widths, not carried by a single year. bench promote --verdict is
+owner-only, never an agent's.
+
+REGISTERED PREDICTION (Analyzer, before build): ~10% the outcome clauses clear
+in full. Point predictions: campaigns 115-140 (the >=142 clause FAILS -- most
+likely single outcome), days_uncovered 750-950, total return +8% to +18%
+(inside the band, below frozen), Sharpe below 0.72, pnl_per_slotday_clean
+$31-36 (coin-flip on the 90% clause), ret/maxDD below 1.029. Viable tier
+populated on most days (~half the pool clears 30% by construction of the
+median pin). Comparisons ledger: 96 arms including this pair (92 + 2 + 2;
+corrected from the registration's "98", an Analyzer arithmetic slip).
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.rank_by]
+value = "vrp_viable"
+why = """
+Two-tier re-ordering: gate-passers whose annualized credit yield on collateral
+clears 30% sort by VRP descending at the front of the queue; all others follow
+in ordinary vol_pctile order. Reorders the pool; never removes a member; tier
+empty => exact vol_pctile behavior. The 30% rung is pinned to the measured
+0.30-delta median (30.9%) and is never swept.
+"""
+since = "2026-08-22"
+source = "vrp-ranker verdict (2026-08-17), licensed follow-up; batch-5 registration"

@@ -1,0 +1,62 @@
+name = "wx-fast-11-21"
+question = "Does the tactical gate work better on the 11/21 pair, matched to the 11-day hold, than on the inherited 9/20 pair?"
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C3 of the ten-candidate brief. AN INHERITED WINDOW, EXAMINED.
+
+`chop_max_fast_fall` reads `sma9/sma20 - 1`. `target_dte` is 11. Nobody chose
+9/20 against 11/21; it arrived with the original chop scanner and has never been
+compared to the window the instrument actually lives in. The precedent for an
+inherited window being quietly wrong is the DTE band bug of 2026-08-09, where
+`derived_band` skipped one whole weekday at every target and the bot could not
+enter weekly-only names one day in five, for its entire life, with nothing
+logging it.
+
+PRE-DECLARED, AND THIS ONE IS ALMOST CERTAINLY A NO-OP. Measured on the same
+17,465 gate-passing ticker-days: 97.6% of the days that pass "9/20 not falling
+more than 1%" also pass "11/21 not falling more than 1%". The two pairs disagree
+on 2.4% of days. So the expected effect is small by construction, and a LARGE
+measured effect would be evidence of something else moving -- most likely the
+selection cascade, where changing which name is available on one session changes
+which slot is free on the next.
+
+That is not a reason to skip it. It costs one bench run, and it converts an
+unexamined inheritance into either a measured no-op (worth knowing, and the
+honest thing to write beside the knob) or a real finding. What it must not
+become is a knob promoted on a 2.4% difference because the P&L happened to land
+right; the pass bar below is set accordingly.
+
+WHY `n_slots = 5`. Shared with the rest of this family: at one slot the base arm
+opens 17 campaigns in 23 months, and a 2.4%-of-days difference cannot be resolved
+against that. Both arms share the setting.
+
+PASS/FAIL, declared before the run. This arm is judged as a NO-OP TEST first:
+report the entry-count difference and the overlap of names selected. Only if the
+books differ materially is the P&L worth reading, and even then PASS requires
+ret/DD improvement in >= 3 of the 2 full years plus 2026, not a blended number.
+A difference on <= 2.4% of candidate days that produces a large P&L swing is a
+path artefact and is to be reported as one.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_fast_pair]
+value = "11/21"
+why = """
+Read the 11/21 mean pair instead of 9/20 for the fast guards. 11 is `target_dte`;
+21 is the same 2:1-ish ratio the original pair used, and is already the window
+`realized_vol` is measured over (VOL_WINDOW = 21), so it introduces no new
+free number -- it reuses two the config had already committed to.
+
+Chosen, not searched. There is no 9/20 vs 10/20 vs 11/21 vs 12/24 sweep behind
+this and deliberately so: the point is to test the ONE alternative that has an
+argument (horizon matching), not to find the best-performing pair, which on this
+sample would be a fit. If it wins by a lot, that is a reason for suspicion.
+"""
+since = "2026-08-15"
+source = "2026-08-15 -- Weather-gate labelling, ten candidates, build brief"

@@ -1,0 +1,47 @@
+name = "iv-ranker"
+question = "Does ranking the pool by IV rank instead of realized-vol percentile beat the live config?"
+base = "frozen"
+status = "testing"
+created = "2026-08-09"
+updated = "2026-08-14"
+touches = ["ranking"]
+note = """
+IMPORTED by bench/salvage.py from the 2026-08-09 ten-arm grid
+(`scratchpad/run_wheel_grid_n1.py`, row 1: live FROZEN + ranker).
+
+Its scorecard is stamped **is_evidence = false** and carries no config hash, so
+`bench promote` refuses it twice over. That is not a judgement on the number --
+it is that the harness recorded no engine sha, no data fingerprint and no config
+hash, so nobody can tell what produced it. To make it evidence, re-run it:
+`bench run iv-ranker`.
+
+JUDGE ON Sharpe and return-per-drawdown, not total return. Delta behaves as a
+leverage dial in this engine, so the 0.40-delta arms top the return column by
+construction -- which is exactly how the original sweep table became unreadable."""
+
+[ops]
+tier = "full"
+n_slots = 1
+
+[knobs.rank_by]
+value = "iv_rank"
+why = """
+Rank the candidate pool by IV RANK rather than by realized-vol percentile.
+
+The live sort (`vol_pctile`) picks the riskiest name and never reads the price
+it is paid for that risk. Worse, the chop weather gate has already capped
+realized vol at the 75th percentile, so the sort is choosing inside a 70-75th
+percentile sliver on the wrong variable.
+
+A sort is the right instrument where a veto was the wrong one. `min_iv_rank` was
+measured as a VETO on 2026-08-04 and rejected: it raised P&L per campaign ~14%
+but HALVED campaign count, costing 18 points of total return (+43.0% -> +24.9%
+at 0.88) and 0.26 of Sharpe, because the wheel's return comes from capital
+turnover. A sort changes WHICH names fill the slots, never HOW MANY, so it does
+not pay that cost.
+
+Owner ruling 2026-08-08: ship it in the live engine, stop proposing another A/B.
+The read side landed in commit 6272640 and it is still OFF in the master config
+as of 2026-08-14."""
+since = "2026-08-05"
+source = "grid row 1, 2026-08-09"

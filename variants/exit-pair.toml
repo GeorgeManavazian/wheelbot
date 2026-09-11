@@ -1,0 +1,87 @@
+name = "exit-pair"
+question = "Do the two exit-leg changes together beat either alone, or does holding calls to expiry cancel the benefit of writing them further out?"
+base = "frozen"
+status = "testing"
+created = "2026-08-16"
+updated = "2026-08-16"
+touches = ["exit"]
+note = """
+THE PAIR EXISTS BECAUSE THE TWO KNOBS ARE NOT INDEPENDENT, and the direction of
+the interaction is knowable in advance, which makes this a real prediction
+rather than a fishing trip.
+
+`calls-to-expiry` removes the take-profit buy-back, so more written calls survive
+to expiry, so MORE positions get called away. `call-otm-25` moves the strike
+those call-aways happen at from roughly spot to roughly 4-5% above it. So the
+first knob increases the number of events the second knob prices. If both are
+real, the pair should beat both singles; if the first knob's benefit was really
+just "fewer call-aways at a bad strike", the pair will show it by beating
+`calls-to-expiry` alone while adding nothing over `call-otm-25` alone.
+
+RUN IT LAST AND READ IT LAST. The singles are the attributable measurements --
+`bench diff` shows one knob each, and a pair that wins tells you nothing about
+which half won. This arm answers only the interaction question, and it is
+recorded so that a future session does not have to re-derive that the two knobs
+touch the same 47 events from opposite sides.
+
+WHAT THE TRADE LOG SAYS ABOUT THE INTERACTION (results/best_run, 530 tickers,
+2021-08-09..2026-08-07, n_slots=5). Of 238 covered calls written, 149 ended in a
+take-profit buy-back and only 47 carried the shares away. Those 47 surrendered
+$78,635 of upside to collect $15,837, while the other 191 collected $44,471 and
+surrendered nothing. Split by how far out the carrying call was written when it
+was written:
+
+    moneyness at write   n    upside surrendered   its credit       net
+    ATM (<= +2%)        27           -$55,351        +$11,797   -$43,554
+    +2..5%              13           -$11,597         +$2,726    -$8,871
+    +5..10%              4            -$5,120           +$948    -$4,172
+    > +10%               3            -$6,567           +$366    -$6,201
+
+70% of the damage is in the ATM bucket, which is the bucket `call_delta`
+controls -- `call_min_strike="basis"` only ever pushes a strike UP, so the delta
+binds only when the position is above water, which is exactly when a call-away
+is about to happen. Removing the buy-back moves more events INTO that table.
+That is the whole hypothesis.
+
+DECLARED PASS/FAIL, before the run. This arm cannot be promoted on its own
+terms; it exists to attribute. PASS = the pair beats BOTH singles on ret/DD.
+INTERACTION CONFIRMED NEGATIVE if the pair is worse than the better single,
+which would mean the two changes are substitutes rather than complements and
+only one should ship. Either outcome is a result; neither is a promotion.
+"""
+
+# Same override and the same reason as both singles -- see calls-to-expiry.toml
+# for the argument. Held identical across all three arms deliberately: an
+# interaction measured at a different width than its own singles is not an
+# interaction measurement.
+[ops]
+n_slots = 5
+
+[knobs.call_take_profit_pct]
+value = 1.0
+why = """
+Hold covered calls to expiry. Identical to the `calls-to-expiry` single so the
+pair is attributable against it -- see that file for the 149-buy-back evidence
+and for why this value is only safe once `write_credit_ok` pins the write floor
+independently of the take-profit (fills.write_credit_floor, 2026-08-16).
+
+Here it plays a second role beyond its own claim: it is what MANUFACTURES
+call-away events for the other knob to price. The pair is the only arm in which
+this knob is doing that job.
+"""
+
+[knobs.call_delta]
+value = 0.25
+why = """
+Write the covered call roughly one standard deviation out at the live 11-day
+tenor instead of at the money. Identical to the `call-otm-25` single so the pair
+is attributable against it -- see that file for the 47-of-47 forfeit evidence
+and for the honest ceiling on what this lever can be worth.
+
+The reason it belongs in a pair rather than only in a single: at 0.50 delta the
+median called-away campaign gave back 4.87% of notional and the top decile gave
+back 17.25%, and `calls-to-expiry` increases how many campaigns reach that
+point. Neither knob changes how often the bot is ASSIGNED; both change only what
+happens to the shares afterwards, which is why they can be read as one mechanic
+seen from two sides.
+"""

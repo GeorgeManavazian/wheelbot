@@ -1,0 +1,59 @@
+name = "liq-oi-50"
+question = "Is 250 open interest simply too high a number, rather than the wrong measure? Does 50 -- still five times any junk contract the review named -- recover most of the menu?"
+base = "frozen"
+status = "testing"
+created = "2026-08-16"
+updated = "2026-08-16"
+note = """
+THE MIDDLE ARM, and it exists to stop `liq-oi-off` being read as proof of an
+argument it cannot prove on its own.
+
+`liq-oi-off` removes the open-interest leg because OI is the wrong INSTRUMENT
+for an 11-day contract. That is a claim about kind. But there is a duller
+explanation that predicts the same result: the instrument is fine and the
+NUMBER is too big. Both arms widen the menu; only running both can tell them
+apart, and the difference decides what gets promoted.
+
+  * If 50 recovers most of the menu that OFF recovers, the number was the
+    problem. Keep the leg, lower it, and the closability protection the floor
+    provides survives.
+  * If OFF recovers far more than 50 does, the distribution has real mass
+    between 0 and 50 -- which is what you would expect if short-dated strikes
+    are being penalised for being short-dated, and the instrument is wrong.
+
+50 IS NOT A FITTED NUMBER. The review's own junk cases carry 1 open interest
+(REGN) and 0 (MTD). 50 is fifty times the worse of them and five times the
+implicit floor the per-account size cap already enforces (OI >= 10 for a single
+contract). It is deliberately a round number chosen from the junk cases rather
+than from any backtest, so that it cannot be tuned afterwards. Nothing about
+this arm's result should be read as "50 is the right value" -- it is one rung,
+and its neighbours are 250 (base) and off (`liq-oi-off`).
+
+THREE-ARM PLATEAU. Read the three together: base 250, this 50, and OFF. A
+monotone improvement across all three is a dial and can be acted on. A spike at
+one rung is a fit and must not be -- the precedent is the -40% stop, which fired
+three times, looked excellent, and did not survive its own neighbours.
+
+THE BAR, DECLARED BEFORE THE RUN. Identical to `liq-oi-off`, so the two are
+comparable:
+  MECHANISM: pool_depth_mean must rise above 3.52; pool_starved_pct must fall
+    below 0.235.
+  OUTCOME: campaigns above 104, ret_per_maxdd not worse than 0.44,
+    pnl_per_slotday_clean at or above 90% of $42.69.
+  NOT SUFFICIENT: total return alone.
+  READ AGAINST `liq-oi-off`, never alone.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.liq_min_open_interest]
+value = 50.0
+why = """
+250 -> 50. Five times the implicit floor the size cap already enforces, fifty
+times the worst junk contract the original review named, and a number taken from
+those cases rather than from any run -- so it is a rung on a ladder, not a
+fitted value. The volume leg stays at 25 and the per-account size caps stay on,
+so this arm changes ONE number.
+"""
+source = "capacity-baseline scorecard live__366f1c919ec5761a"

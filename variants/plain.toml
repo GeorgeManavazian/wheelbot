@@ -1,0 +1,40 @@
+name = "plain"
+question = ""
+status = "promoted"
+created = "2026-08-14"
+updated = "2026-08-14"
+note = """
+The root of the essay. NO knobs at all -- resolving `plain` yields an empty
+diff, so `WheelConfig(**resolve("plain").knobs)` is `WheelConfig()`: every
+defence off, every gate off, the original engine.
+
+This is not a placeholder. It is the control arm. `wheel.py` says "default-off
+so the plain path is byte-identical" beside almost every flag it has, and the
+goldens that sentence protects are goldens of THIS config. Keeping it as a
+named variant means the control arm is a thing you can point at and run,
+instead of a thing you have to remember not to change.
+
+Do not add knobs here. A knob that belongs to everything belongs in the engine
+defaults; a knob that belongs to the live bot belongs in `frozen`.
+
+The `[ops]` block below is the shared bench setup -- the conditions of the
+experiment rather than the strategy. Every variant inherits it unless it
+overrides, so two variants are never accidentally compared over different
+windows.
+
+`tier` is ONE choice covering universe AND window (see bench/tiers.py). It is
+one field rather than three because a variant that could set them separately is
+a variant that can quietly become incomparable to the one before it, which is
+what happened across the old scratchpad harnesses.
+
+n_slots = 1 IS THE OWNER'S CHOICE (2026-08-09), and it must be read narrowly:
+at n=1 the held-exclusion rule removes exactly one name from the pool, so the
+self-starvation that killed rank_by="iv_rank" at n=3 and n=5 in the 2026-08-05
+A/B cannot fire. A win at n=1 is a win at n=1 and says nothing about width.
+"""
+
+[ops]
+tier = "live"
+n_slots = 1
+capital = 100000.0
+selector = "chop"

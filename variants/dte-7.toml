@@ -1,0 +1,37 @@
+name = "dte-7"
+question = "Does target_dte 7 beat 11, holding the live delta and take-profit fixed?"
+base = "frozen"
+status = "testing"
+created = "2026-08-14"
+updated = "2026-08-14"
+touches = ["dte"]
+note = """
+The live triple -- 0.30 delta / 11 DTE / 60% TP -- has never been A/B'd as a set
+against the alternatives. The +95.4% IV-ranker run used 0.40 / 7 / 25%, and
+"ship that version" would mean changing all three at once, which is exactly the
+kind of move that makes a result unattributable.
+
+This is the one-knob-at-a-time version: change DTE alone, hold everything else
+at the live values, and see whether the neighbour is a cliff or a plateau. Row 4
+of the 2026-08-09 ten-arm grid asked the same question but under
+rank_by="iv_rank", so its answer is entangled with the ranker.
+"""
+
+[knobs.target_dte]
+value = 7
+why = """
+Half the theta window of the live 11. A shorter-dated put decays faster and
+turns the slot over more often, which matters because the wheel's return comes
+from capital turnover -- that is the mechanism that made the IV-rank VETO cost
+18 points of return while raising P&L per campaign.
+
+The counter-argument is the reason it is a question and not a change: shorter
+DTE means a smaller absolute credit against the same fixed per-contract friction
+($0.65 commission + $0.05 fees per side), so the minimum-credit floor and the
+collateral-yield floor both bite harder. Whether the extra turns pay for the
+extra friction is exactly what the scorecard measures.
+
+Also note derived_band(7) = (5, 11) vs derived_band(11) = (9, 15): the two arms
+select from bands that barely overlap, so this is a real change of instrument,
+not a nudge.
+"""

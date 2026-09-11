@@ -1,0 +1,205 @@
+{
+ "variant": "vol-ceiling-45",
+ "base": "frozen",
+ "tier": "live",
+ "is_evidence": true,
+ "created": "2026-08-17T20:02:55+00:00",
+ "arms": {
+  "variant": {
+   "total_return": 0.08328667890106667,
+   "cagr": 0.04335545117233641,
+   "sharpe": 0.3449399738403515,
+   "max_drawdown": -0.17237575026708318,
+   "ret_per_maxdd": 0.4831693481943966,
+   "pnl": 8011.698214639939,
+   "final_equity": 108011.69821463994,
+   "n_days": 475,
+   "by_year": {
+    "2024": 0.034068686698616624,
+    "2025": 0.11659441419764205,
+    "2026": -0.05717444468417143
+   },
+   "worst_year": -0.05717444468417143,
+   "campaigns": 122,
+   "assignments": 29,
+   "assignment_rate": 0.23770491803278687,
+   "shares_sold": 0,
+   "sold_per_assignment": 0.0,
+   "days_flat": 0,
+   "days_uncovered": 678,
+   "n_trades": 445,
+   "n_warnings": 1786,
+   "warning_counts": {
+    "entry_gated_illiquid": 934,
+    "call_gated_no_credit": 480,
+    "covered_call_unreachable": 149,
+    "entry_gated_earnings": 148,
+    "entry_gated_low_yield": 42,
+    "entry_gated_unclosable": 26,
+    "expiry_settled_reachback": 3,
+    "expiry_resolved_late": 3,
+    "entry_gated_intrinsic": 1
+   },
+   "final_shares": {
+    "CMG": 100.0,
+    "WDAY": 100.0,
+    "CMCSA": 400.0,
+    "PG": 300.0
+   },
+   "idle_slot_days": 6,
+   "pool_starved_days": 4,
+   "pool_depth_mean": 9.702970297029703,
+   "pool_starved_pct": 0.039603960396039604,
+   "scan_names_mean": 525.2673267326733,
+   "scan_no_chain_mean": 125.11881188118812,
+   "scan_weather_mean": 373.3168316831683,
+   "scan_no_contract_mean": 5.732673267326732,
+   "campaigns_open_at_end": 5,
+   "slotdays_occupied": 2369,
+   "slotdays_assigned": 1865,
+   "slotdays_assigned_pct": 0.7872520050654285,
+   "slot_fill_pct": 0.9974736842105263,
+   "campaigns_clean": 92,
+   "pnl_per_slotday_clean": 23.95806467160013,
+   "campaigns_assigned": 25,
+   "pnl_per_slotday_assigned": 10.139223507064457,
+   "secs": 14.4
+  },
+  "base": {
+   "total_return": 0.22922545484399492,
+   "cagr": 0.115711458548996,
+   "sharpe": 0.719204492996727,
+   "max_drawdown": -0.22278216455737843,
+   "ret_per_maxdd": 1.0289219305298427,
+   "pnl": 22580.69789031631,
+   "final_equity": 122580.69789031631,
+   "n_days": 475,
+   "by_year": {
+    "2024": -0.03804680875604205,
+    "2025": 0.30587700814544694,
+    "2026": -0.03861668410763974
+   },
+   "worst_year": -0.03861668410763974,
+   "campaigns": 142,
+   "assignments": 28,
+   "assignment_rate": 0.19718309859154928,
+   "shares_sold": 0,
+   "sold_per_assignment": 0.0,
+   "days_flat": 0,
+   "days_uncovered": 641,
+   "n_trades": 478,
+   "n_warnings": 2166,
+   "warning_counts": {
+    "entry_gated_illiquid": 1223,
+    "call_gated_no_credit": 496,
+    "entry_gated_earnings": 217,
+    "covered_call_unreachable": 89,
+    "entry_gated_low_yield": 63,
+    "entry_gated_intrinsic": 38,
+    "entry_gated_unclosable": 36,
+    "expiry_settled_reachback": 2,
+    "expiry_resolved_late": 2
+   },
+   "final_shares": {
+    "WDAY": 100.0,
+    "PG": 200.0,
+    "HD": 100.0,
+    "NIO": 3300.0
+   },
+   "idle_slot_days": 7,
+   "pool_starved_days": 6,
+   "pool_depth_mean": 11.705882352941176,
+   "pool_starved_pct": 0.05042016806722689,
+   "scan_names_mean": 525.2521008403361,
+   "scan_no_chain_mean": 99.94117647058823,
+   "scan_weather_mean": 393.453781512605,
+   "scan_no_contract_mean": 6.899159663865547,
+   "campaigns_open_at_end": 5,
+   "slotdays_occupied": 2368,
+   "slotdays_assigned": 1775,
+   "slotdays_assigned_pct": 0.7495777027027027,
+   "slot_fill_pct": 0.9970526315789474,
+   "campaigns_clean": 113,
+   "pnl_per_slotday_clean": 35.92598275993921,
+   "campaigns_assigned": 24,
+   "pnl_per_slotday_assigned": 11.770827285013334,
+   "secs": 17.7
+  }
+ },
+ "provenance": {
+  "engine": {
+   "sha": "3e814d834e75",
+   "branch": "feat/ticker-dossiers",
+   "dirty": false,
+   "dirty_files": []
+  },
+  "config_hash": {
+   "variant": "7bfa3742e2ff70ac",
+   "base": "76c904270c347994"
+  },
+  "data": {
+   "hash": "194898688a1b3ca0",
+   "n_files": 25360,
+   "bytes": 3763045258,
+   "n_tickers": 529,
+   "stores": [
+    "data/options/chains",
+    "data/options/open_interest"
+   ]
+  },
+  "env": {
+   "python": "3.12.13",
+   "pandas": "3.0.3",
+   "host": ""
+  }
+ },
+ "conditions": {
+  "start": "2024-08-01",
+  "end": "2026-07-01",
+  "n_slots": 5,
+  "capital": 100000.0,
+  "selector": "chop",
+  "max_dte": 15,
+  "n_tickers_requested": 531,
+  "n_tickers_loaded": 529,
+  "dropped": {
+   "no_chain": 1,
+   "no_closes": 0,
+   "no_state": 1
+  }
+ },
+ "divergences": [
+  "open_interest is present on 98.1% of chain rows (0 of 529 tickers have no column at all). liquidity_ok REFUSES when a threshold is set and the field is missing or NaN, so every one of the other 1.9% is barred from entry -- on data availability, not on liquidity. The OI store reaches near-full coverage only from 2024-08; the `live` tier starts there for this reason. Visible in the refusal counts as entry_gated_illiquid.",
+  "earnings calendar knows 528 of 529 universe names; the other 1 read as UNKNOWN and in_blackout ALLOWS on unknown. This is identical to what the live bot does with the same file, so it is faithful rather than a divergence -- but it is not full protection."
+ ],
+ "wall_secs": 32.114195823669434,
+ "notes": "",
+ "schema": 1,
+ "delta": {
+  "sharpe": -0.37426451915637543,
+  "ret_per_maxdd": -0.5457525823354461,
+  "total_return": -0.14593877594292826,
+  "cagr": -0.07235600737665959,
+  "max_drawdown": 0.05040641429029524,
+  "worst_year": -0.01855776057653169,
+  "pnl": -14568.999675676372,
+  "campaigns": -20.0,
+  "assignments": 1.0,
+  "assignment_rate": 0.04052181944123759,
+  "days_flat": 0.0,
+  "days_uncovered": 37.0,
+  "n_trades": -33.0,
+  "shares_sold": 0.0,
+  "sold_per_assignment": 0.0,
+  "slot_fill_pct": 0.0004210526315788776,
+  "slotdays_assigned_pct": 0.03767430236272573,
+  "pnl_per_slotday_clean": -11.96791808833908,
+  "pnl_per_slotday_assigned": -1.631603777948877,
+  "idle_slot_days": -1.0,
+  "pool_depth_mean": -2.002912055911473,
+  "pool_starved_pct": -0.010816207671187288,
+  "scan_no_chain_mean": 25.17763541059989,
+  "scan_weather_mean": -20.13694982943673,
+  "scan_no_contract_mean": -1.1664863965388141
+ }
+}

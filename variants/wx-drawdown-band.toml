@@ -1,0 +1,66 @@
+name = "wx-drawdown-band"
+question = "Does entering only inside a drawdown BAND -- 5% to 20% off the 252-day high -- beat a gate that never looks at how far a name has fallen?"
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C7 of the ten-candidate brief. A PUT SELLER IS PAID FOR BUYING WEAKNESS, SO THE
+SIGNAL IS A BAND.
+
+At the 252-day high there is no dip to be paid for: the premium is thin and the
+seller is short a rally. Below roughly -20% the name is not dipping, it is
+impaired, and the wheel's recovery assumption -- take assignment, sell calls,
+get called away -- is the assumption most likely to fail there. Both edges are
+arguments about the same quantity, which is why this is a band and not a
+threshold, and a band is the one shape on this list whose neighbourhood can be
+checked for a plateau in both directions.
+
+The frame has carried `drawdown` since the beginning and no gate has ever read
+it.
+
+MEASURED on the 17,465 gate-passing ticker-days (2026-08-15): drawdown p05
+-0.268, p25 -0.157, p50 -0.107, p75 -0.070, p95 -0.023. So the current gate
+admits names at their highs and names down a quarter, indifferently.
+
+THE COUNTER, and it is the reason this arm carries the highest overfitting risk
+on the list: THREE free numbers -- two edges and the 252-day lookback. It needs
+the widest plateau of anything here before it is believed. Stated in advance:
+a pass at [-0.20, -0.05] that does not survive [-0.30, -0.03] and [-0.15, -0.05]
+is a fit, not a finding.
+
+WHY `n_slots = 5`. Shared with this family. Both arms share the setting.
+
+PRE-DECLARED POOL EFFECT: this band keeps 72.2% of gate-passing days, ~26 of ~36
+candidates per session against 5 slots -- so it should not starve.
+
+PASS/FAIL, declared before the run. FAIL on entry count below ~60% of base. PASS
+requires assignment_rate to fall AND ret/DD not to worsen AND both neighbouring
+bands to agree in direction. Three conditions, because there are three free
+numbers.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_drawdown_band]
+value = [-0.2, -0.05]
+why = """
+Enter only when the close is between 5% and 20% below its 252-day high.
+
+Both edges are arguments, not fits. -0.05: above it there is no dip to be paid
+for. -0.20: below it the name is impaired rather than dipping, and impairment is
+where the wheel's recovery mechanism breaks. Round numbers on purpose -- a band
+of -0.187 to -0.043 would score marginally differently and mean nothing.
+
+Against the measured pool this keeps 72.2% of gate-passing days, sitting between
+the p95 (-0.023) and p10 (-0.218) of the distribution, so it trims both tails
+rather than one -- which is what a band is for and what a threshold cannot do.
+
+The 252-day lookback is inherited from `HIGH_WINDOW` in state.py and is NOT a
+choice made here; it is called out as the third free number in this arm's note
+because pretending it is fixed would understate the fitting risk.
+"""
+since = "2026-08-15"
+source = "2026-08-15 -- Weather-gate labelling, ten candidates, build brief"

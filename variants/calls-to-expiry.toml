@@ -1,0 +1,138 @@
+name = "calls-to-expiry"
+question = "Does holding covered calls to expiry beat buying them back at 60%, holding the live delta, DTE and put take-profit fixed?"
+base = "frozen"
+status = "promoted"
+created = "2026-08-15"
+updated = "2026-08-16"
+touches = ["exit"]
+note = """
+PRECONDITION MET 2026-08-16. This variant was refused on 2026-08-15 because the
+knob deleted a guard rather than relaxing one; the write-credit floor below is
+what made it runnable.
+
+WHY THE WRITE FLOOR HAD TO COME FIRST. `tp_exit_floor` returns None for any take-profit >= 1.0 --
+correctly, since a hold-to-expiry short has no take-profit exit to be
+unreachable -- and `tp_exit_feasible` then short-circuits to (True, "") for
+EVERY credit, $0.00 included. Verified at runtime:
+
+    tp=0.60 -> floor $0.025, feasible(bid=0.00) = (False, 'tp_unreachable')
+    tp=1.00 -> floor None,   feasible(bid=0.00) = (True,  '')
+
+On the put leg that hole is covered by A2 and the intrinsic/yield floors. On the
+CALL leg it is not: calls are deliberately exempt from A2, because refusing a
+call leaves shares naked, so A3b IS the call leg's only minimum-credit rule.
+`call_take_profit_pct = 1.0` deleted it, and `sell_proceeds(bid=0, n)` is
+`-friction * n` -- a guaranteed loss on every contract. Those quotes are
+reachable: the stored chains carry 14-40% zero-bid rows by file, and the live
+arm's minimum written call price is exactly $0.03 across 238 writes with none
+below, which is the $0.025 floor showing as the tick above it.
+
+THE FIX, and why it is safe. `fills.write_credit_floor` / `write_credit_ok`: a
+minimum credit that does not depend on take_profit_pct, `max(MIN_TICK,
+friction/mult)`, wired into all five write sites across portfolio.py, wheel.py
+and regime_router.py, with its own refusal reason (`*_gated_no_credit`) so it
+can never be mistaken for A3b's counter again. At every take-profit in the repo
+(0.50, 0.60) A3b's floor is $0.02-$0.025, already above one tick, so the new
+floor binds nowhere the old one spoke and the live config resolves
+byte-identical -- pinned by a 40-case parametrized test over tp x credit plus a
+wiring test asserting all three engines consult it.
+tests/engine_v2/options/test_write_credit_floor.py, 52 cases.
+
+So this is now an A/B of "hold vs take profit", rather than an A/B of "hold, and
+also sell worthless calls at a debit".
+
+--------------------------------------------------------------------------------
+
+WHY THE KNOB IS WORTH A RUN. `take_profit_pct` = 0.60 currently governs BOTH
+legs: it buys the short put back at 60% of the credit and -- unless overridden --
+buys the covered call back too. On a put, taking profit closes the position and
+frees the slot. On a call it buys back the hedge and KEEPS YOU IN THE STOCK,
+which is the opposite of what the call is for after an assignment.
+
+MEASURED ON THE EXPORTED BEST ARM (results/best_run, 530 tickers,
+2021-08-09..2026-08-07, n_slots=5). Of 238 covered calls written: 149 (63%)
+ended in a take-profit buy-back, 47 in CALLED_AWAY, 40 expired worthless. The
+buy-back is the DOMINANT outcome of the covered-call leg, not an edge case.
+
+Tracing what followed each of those 149 buy-backs:
+
+    a new call written before the original expiry    51 (34%)
+      paid $4,341 to close, collected $8,030         net +$3,689
+    no new call before the original expiry           98 (66%)
+      paid $6,369 to close, bought nothing
+    and 140 of the 149 (94%) would have expired worthless if simply held
+
+The churn pays when a re-write follows and is a dead loss when it does not, and
+two thirds of the time it does not. The mechanism is not luck: a call only
+becomes cheap to buy back BECAUSE the stock fell -- 147 of the 149 buy-backs
+happen with spot below the assignment strike, median 9.8% below -- and a stock
+below the assignment strike is exactly what puts the next writable strike under
+the basis floor. The profit-taking rule is accidentally a "the stock just fell"
+alarm, and it fires at the moment the other rules make re-writing impossible.
+
+Depth makes it worse but does not explain it: >15% below the assignment strike,
+83% fail to re-write (n=23); at 5-15%, 62% (n=93); at 0-5%, 65% (n=31). It jams
+at almost any depth.
+
+DO NOT PROMOTE ON THE OLD SWEEP'S P&L. Stage 2 read +14.1% vs +11.2% blended,
+but year-by-year it is 2022 +6.6 vs +4.4, 2023 -2.7 vs +5.2, 2024 +1.6 vs -1.8,
+2025 +12.5 vs +12.8, 2026 -11.4 vs -9.5 -- three of five years no better -- and
+max drawdown does not agree in sign between the stages. Every number in that
+sweep also came from `scratchpad/sweep_assignment_exit.py`, which is not the
+bench: n_slots=5 over a window no tier covers, with `liq_min_open_interest =
+None` because its loader carries no open_interest column at all, against a live
+config that sets that floor to 250. It measured a different config's
+covered-call leg, without the write floor that makes the arm honest.
+
+THE COUNTER-ARGUMENT, and it is real. Campaigns fell 190 -> 154 in that sweep,
+and this wheel's return comes from capital turnover -- the mechanism that made
+the IV-rank veto cost 18 points of return. Holding a call the full 11 days
+instead of 7 is fewer turns of the assigned leg. Whether the naked-day reduction
+pays for the lost turns is what the scorecard measures.
+
+DECLARED PASS/FAIL, before the run. PASS requires BOTH: `days_uncovered` falls
+materially -- this is a coverage mechanic and coverage is the claim -- AND
+ret/DD does not worsen. A P&L improvement alone is NOT a pass: on ~20
+assignments the return difference is a handful of stocks. FAIL if days_uncovered
+is flat or rises, whatever the P&L does. `call_gated_no_credit` appearing in the
+variant arm is the diagnostic that the write floor is doing real work; it should
+be absent from the base arm, where A3b's higher floor speaks first.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.call_take_profit_pct]
+value = 1.0
+why = """
+Hold covered calls to expiry instead of buying them back at 60% of the credit.
+>= 1.0 is the value `try_take_profit` already understands as hold-to-expiry
+(fills.py:117-118), so this adds no new branch and no new threshold -- which
+matters, because 54 assignments cannot honestly support a fitted number, and the
+0.25 arm was the worst in the whole 2026-08-14 sweep (stage 1 -41.6%, stage 2
+-2.9%).
+
+Set on the CALL leg only. `take_profit_pct` stays 0.60 for the short put, where
+taking profit closes the position and frees the slot -- the opposite of what it
+does on a call, where it closes the hedge and keeps the stock. The two legs have
+wanted different values since the knob was added; this is the first arm that
+gives them different values.
+
+n = 149 take-profit buy-backs on covered calls, across 54 assigned campaigns and
+all five years of the exported arm (results/best_run/trades.csv, CLOSE_CALL
+rows), of which 98 were followed by no re-write before the original expiry and
+140 would have expired worthless if held. That is a rule, not a fit.
+
+It is only safe to set because `write_credit_ok` pins the write floor
+independently of the take-profit.
+"""
+
+[[evidence]]
+kind = "promotion"
+date = "2026-08-16"
+verdict = "Owner decision 2026-08-16: ship it, and ship ONLY this. Covered calls now run to expiry; the short put keeps its 60% take-profit. Measured at n_slots=5 on both evidence tiers with the write-credit floor in place. Full tier (2022-06..2026-07, 529 names, 45 assignments): ret/DD -0.24 -> 1.61, return -6.7% -> +33.9%, max drawdown -27.8% -> -21.1%, and uncovered slot-days 2,511 -> 1,965. Better in five years out of five, which is what separates this from the -40% stop that fired three times. The declared counter-argument was refuted by the run: campaigns ROSE 158 -> 198, because holding the call to expiry is what gets the shares called away and frees the slot, while the take-profit bought the hedge back and kept the position stuck. Live tier agrees (ret/DD -0.16 -> 0.44, uncovered 1,146 -> 1,037). The bar was declared before the run - days_uncovered must fall AND ret/DD must not worsen, with P&L alone explicitly not sufficient - and both halves were met. NOT shipped alongside: call-otm-25 failed its own bar on the long window at exactly 2 of 5 years, and exit-pair (both knobs) is worse than either single on both windows, so the two are substitutes rather than complements. Call-write refusals go 792 -> 749."
+scorecard = "full/366f1c919ec5761a"
+engine = "daf481722377"
+data = "b702e8f0548b8fcb"
+sharpe_delta = "+0.488"
+ret_per_maxdd_delta = "+1.854"

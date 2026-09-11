@@ -1,0 +1,60 @@
+name = "prefer-slice-6-10"
+question = "Ranks 6-10 preferred to the front of the queue -- a re-ordering that can never starve: does the batch-3 slice gap survive with the starvation confound removed?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-18"
+updated = "2026-08-18"
+touches = ["entry"]
+verdict = """
+REJECTED-AS-INERT-CANDIDATE 2026-08-18 (Analyzer, batch 4; the
+starvation-free instrument for the batch-3 slice question). Purpose: does
+the batch-3 rank-slice return gap survive once the starvation confound
+(86-229 empty pool-window days on the veto-form slices) is removed by
+switching to a preference that always falls back to the full pool? It does,
+and by a similar magnitude: +4.55% vs frozen +22.92%, an 18.37pp gap, close
+to rank-none-control's 21.15pp full-deletion gap at the same n5 width.
+pool_depth_mean 11.61 vs 11.71 and slot_fill_pct ~1.0 on both arms confirm
+no starvation occurred -- this gap is ordering signal, clean.
+
+MECHANISM: assignment_rate is nearly unchanged (0.197->0.205, unlike
+rank-none-control's 0.197->0.329) -- promoting ranks 6-10 does not push the
+book toward more assignment-prone names the way deleting the sort entirely
+does. The channel here is turnover: campaigns 142->78, roughly half, with
+assignment rate flat -- average holding time per campaign roughly doubles.
+vol_pctile's top slice (ranks 1-5, demoted to second priority here) cycles
+through take-profit meaningfully faster than ranks 6-10; deprioritizing them
+starves the book of fast-cycling premium, not of names.
+
+CONCLUSION: two independent mechanisms (assignment avoidance in
+rank-none-control, turnover speed here) both trace back to the same root --
+vol_pctile is picking names with better subsequent option/price behavior,
+not arbitrating a tie among equivalent gate-passers. Batch-3's slice results
+were real ordering signal on top of a starvation confound, not starvation
+artifacts alone.
+See [[2026-08-18 — Batch 4, the ranking is real, campaign certified with a live selection axis open]].
+"""
+note = """
+RUNS ONLY ON OWNER SIGN-OFF. Batch 4 is a PROPOSAL at the owner's gate (batch-3 terminal state: shortlist empty, campaign paused); this file is a pre-registration in the buffer-x-delta-pair pattern -- the question and bar go on the record before any run, and the run happens only if the owner opens the gate.
+
+THE PREFERENCE FORM of the batch-3 slice, starvation-free by construction: sort ranks 6-10 of the day's pool FIRST, then everyone else in ordinary rank order -- a re-ordering, never a veto, exactly the prefer_chop_half shape (a preference cannot starve; a window can and did, 86-229 empty days on the batch-3 slices). Supersedes rank-slice-11-15 as the clean instrument for the ordering question.
+
+THE BAR, REGISTERED NOW (both controls read together): if rank-none-control lands within noise of frozen at BOTH widths (<=15pp at n5, <=8pp at n20), the vol_pctile ranking is certified INERT -- selection closes and the full campaign certification assembles (Batch 1: exit closed; Batch 2: spine family under SPY; Batch 3: slices starvation-confounded; Batch 4: ordering itself carries nothing). If it is MATERIALLY WORSE at both widths, vol_pctile has real signal and the batch-3 slice results were starvation artifacts on top of a live axis. The preference-form arm separates the remaining ambiguity: it re-orders without ever starving, so any gap it shows IS ordering signal, clean of the window_empty confound (86-229 starved days on the batch-3 slices).
+
+KNOBS, IN PROSE (nothing is built): needs a tiny knob -- prefer_rank_window: list | None = None, [a, b] 1-indexed: candidates ranked a..b sort to the FRONT of the pool, ordinary rank order inside each tier, full-pool fallback (the prefer_chop_half side-dict pattern, portfolio.py pref_tier). Byte-identical at None. Built ONLY if the owner opens the gate.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.prefer_rank_window]
+value = [6, 10]
+why = """
+The preference form of the batch-3 slice, starvation-free by construction:
+ranks 6-10 of the sorted pool move to the FRONT of the queue, ordinary rank
+order inside each tier, full-pool fallback behind -- a re-ordering, never a
+veto (the prefer_chop_half shape), so it cannot starve and any gap it shows IS
+ordering signal, clean of the window_empty confound (86-229 starved days on
+the batch-3 slices). Byte-identical at None. Built and tested 2026-08-18
+(BUILD B batch 4, test_prefer_rank_window.py, 7 cases).
+"""
+source = "Batch-4 pre-registration (batch-3 close, 2026-08-18); owner gate opened 2026-08-18"

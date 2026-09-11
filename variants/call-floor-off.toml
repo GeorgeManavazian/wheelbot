@@ -1,0 +1,89 @@
+name = "call-floor-off"
+question = "With the basis floor deleted outright -- call_min_strike unset, nothing else -- what does the uncovered jam actually cost, and what bracket does that put around every gentler floor-relaxation arm?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-17"
+updated = "2026-08-17"
+touches = ["exit"]
+verdict = """
+REJECTED-AS-CANDIDATE 2026-08-17 (Analyzer, batch 1; bench status "rejected"
+-- the control DID its job, the qualifier lives here). Ablation of
+call_min_strike. Mechanism-alive passed exactly as predicted: days_uncovered
+641->90, call_gated_no_credit 496->4, unreachable 89->0 -- the floor is
+arithmetically the whole remaining jam. The bracket price: -6.15% vs +22.92%,
+ret/DD -0.30, pnl/sd_assigned -$17.74, with 44 below-basis call-aways
+realizing -$34,176 across 31 realized losers (the base has zero). Six paired
+campaigns are the cleanest evidence this project has on the floor: on
+identical entries, floor-off realized WDAY -$6,189 / LYFT -$4,532 / HSY
+-$1,522 / AMGN -$1,413 / ALB -$729 / WYNN -$205 where base patience delivered
++$1,019 / +$309 / +$217 / +$165 / +$166 (and held WDAY unrealized). The floor
+is worth ~29pp on this window because it forbids selling the bottom. No
+seductive-answer problem: the delete-the-rule arm LOST. Basis floor certified
+load-bearing; do not revisit without a different market regime on the card.
+
+Scorecard: bench/scorecards/call-floor-off/live__d747f9a304af55cd.json
+(engine 0838351260cf, dirty=false).
+"""
+note = """
+GATE-CAMPAIGN BATCH 1, WAVE 1, ARM 1 (Analyzer bar v2, 2026-08-17). CONTROL,
+NOT A PROMOTION CANDIDATE. This arm brackets the floor question from the far
+end; it ships nothing by itself.
+
+MECHANISM. Every remaining uncovered day in the current base is floor-caused:
+496 call_gated_no_credit + 89 covered_call_unreachable of the base's 641
+uncovered slot-days. With the floor gone, the 0.50-delta target sits
+approximately at spot, so deleting the floor never caps the stock below
+current market -- this is NOT tier 2's poison (exit-ladder-on's rejected tier
+2 wrote 0.80-delta calls far BELOW market and sold away the recovery). It is
+"exit at spot plus time premium," reached through a knob that already exists.
+
+PRIOR-EVIDENCE NOTE. The 2026-08-14 reading was that A3b caused 78% of the
+jam, not the floor. A3b is gone since call_take_profit_pct=1.0 (promoted
+2026-08-16): tp_exit_feasible admits everything at tp >= 1.0. Under the
+CURRENT config the floor IS the proximate cause (496 + 89, measured on the
+liq-junk-floor card). That config change is what reopens this measurement.
+
+THE BAR, DECLARED BEFORE THE RUN (Analyzer, final version).
+
+  INFORMATIVE-PASS (this is a control; "pass" means the jam model is right):
+    * days_uncovered <= 150
+    * call_gated_no_credit + covered_call_unreachable near zero
+    Anything else means the jam model is wrong -- which is itself a result.
+
+  READ-OUT is the BRACKET: delta ret/DD, delta total_return, delta
+  pnl_per_slotday_assigned vs base, at both widths (n5 and n20).
+
+  PRE-COMMITTED SEDUCTIVE-ANSWER RULE: if this arm beats base on ret/DD, a
+  mandatory adversarial replication comes BEFORE any shortlist mention --
+  n20 confirmation + per-year decomposition + final_shares single-name
+  sensitivity, NIO specifically. Even then it ships only via a later
+  dedicated arm, never from this control.
+
+SHARED BATCH RULES. Noise band: at n5, total_return within base - 10pp is
+"not degraded". Year-bucket rule: worse than base in at most 1 of the 3
+buckets (2024 / 2025 / 2026) by more than 3pp.
+"""
+
+[ops]
+# Same override and reasoning as every capacity/exit arm: the shared [ops] is
+# n_slots = 1, at which a mechanic that fires on assigned stock has almost
+# nothing to fire on. Five is the width the bot is reasoned about.
+n_slots = 5
+
+[knobs.call_min_strike]
+unset = true
+why = """
+OFF -- the one change in this arm, and it is the control's whole job. The
+frozen value "basis" forbids any covered call whose strike sits below net
+basis; under the current config that floor is the proximate cause of 585 of
+the 641 uncovered slot-days (496 call_gated_no_credit + 89
+covered_call_unreachable). Unsetting it removes the floor entirely so the
+write always happens at the call_delta=0.50 target, which sits approximately
+at spot -- never below current market, so this cannot repeat tier 2's
+below-market cap (the poison that rejected exit-ladder-on). The cost being
+measured: a call written at spot while the position is underwater can lock in
+a realized loss on the shares when it is called away. That cost, priced
+honestly at both widths, is the bracket every gentler floor arm is read
+against.
+"""
+source = "Analyzer batch-1 v2 (2026-08-17); liq-junk-floor scorecard live/76c904270c347994"

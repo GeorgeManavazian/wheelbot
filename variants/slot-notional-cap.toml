@@ -1,0 +1,31 @@
+name = "slot-notional-cap"
+question = "Does bounding the concentration fallback at 1.25x the slot budget cut the drawdown the batch-2 10-worst list is made of, without giving back more return than it saves?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-18"
+updated = "2026-08-18"
+touches = ["entry"]
+verdict = """
+BAR UNMET, byte-identical -- 2026-08-18, Analyzer, batch-3 grading (campaign pauses at the owner's gate; shortlist empty). Verbatim:
+
+132 refusals, zero selection change -- at n5 the cap never touched a selected name; maxDD delta 0.00 against a >=3pp bar. Builder-verify note: HD (360x1 = $36k) entered under a 1.25x cap -- confirm the re-split budget denominator matches intent; the n20 arm proves the knob binds, so this is a semantics check, not a defect claim.
+
+BUILDER SEMANTICS CHECK (2026-08-18, from the fills log and the code): confirmed -- the denominator is the engine's A12 equal split, available / EMPTY slots, which grows as the book fills and cash accumulates; HD entered 2026-03-02 with cash ~$112k and few empty slots, so 1.25x budget cleared its $36k notional. The implementation matches the engine's own 'slot budget' definition; a static capital/n_slots reading ($20k, cap $25k) would have refused it. Semantics, not defect.
+"""
+note = """
+Pre-registration: vault note "10 Live Paper Bot/2026-08-18 -- Batch 3 pre-registration, selection and the last dials.md", bars written before any run. Declared the LAST batch before campaign-level certification unless a registered bar is cleared. Noise rules carried: A-1b (n5 deltas < 15pp = book noise) and A-5 (a candidate must survive removal of its largest open mark).
+
+THE BAR (registered, H-B2-1): maxDD improves >= 3pp AND worst-year improves AND total_return within noise at n5 AND n20 return >= frozen-n20 + 2pp. The grid's 10-worst list is 100% this shape, so a miss FALSIFIES the concentration story -- also worth having. Paired run: this file at n5, slot-notional-cap-n20 at the second width.
+"""
+
+[ops]
+# Batch-3 width: every n5 claim is stated at 5 slots, $20k/slot.
+n_slots = 5
+
+[knobs.slot_notional_cap_mult]
+value = 1.25
+why = """
+1.25x the equal-split slot budget: a $20k slot may stretch to a $25k single contract and no further. Bounds the A12 fallback in both paths (entry_gated_notional, promote-the-next); referenced to the equal split so the cap cannot grow with the concentration it exists to bound. Built and tested 2026-08-18 (test_slot_notional_cap.py, 5 cases).
+"""
+source = "Batch-3 pre-registration Wave 2 (2026-08-18)"
+

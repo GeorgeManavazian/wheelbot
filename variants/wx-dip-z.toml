@@ -1,0 +1,72 @@
+name = "wx-dip-z"
+question = "Does a VOL-NORMALISED dip -- the gap to the 21-day mean measured in that name's own sigmas -- beat the percentage-based tests every other gate in the config uses?"
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C8 of the ten-candidate brief. ONE THRESHOLD THAT MEANS THE SAME THING ACROSS
+530 NAMES.
+
+A 3% dip in a 15%-vol name and a 3% dip in a 60%-vol name are different events by
+a factor of four, and every percentage-based gate in this config treats them as
+the same. `chop_max_fast_fall = 0.01` is exactly that: one percentage, applied
+across a universe whose realized vol runs 13% to 47% between the 5th and 95th
+percentiles of the gate's own admitted days. Normalising the dip by the name's
+own 21-day sigma is what makes a universe-wide threshold a statement rather than
+an accident of which names happen to be quiet.
+
+MEASURED, AND THE MEASUREMENT CHANGES THE READING (2026-08-15, 17,465
+gate-passing ticker-days). `dip_z` runs p05 -0.540, p25 +0.010, p50 +0.371,
+p75 +0.686, p95 +1.127. The MEDIAN gate-passing day is ABOVE its 21-day mean, not
+below it. The live gate is not selecting dips at all -- it is a down-leg refusal,
+and what it leaves behind is mostly names drifting up.
+
+So this arm is a bigger change than the brief implied: the band [-1.5, -0.25]
+keeps 13.0% of gate-passing days, roughly 4.7 candidates per session against 5
+slots. IT IS EXPECTED TO STARVE, and that is now a prediction rather than a
+discovery. It is still worth running, because "the gate does not select dips"
+is a finding either way and because the starvation, if it happens, is the
+cleanest available demonstration of the mechanism that killed `min_iv_rank`.
+
+THE OTHER COUNTER: this is the second knob in this family to consume `rvol`
+(`wx-vol-ceiling` is the first). If both ever ship, their interaction has to be
+measured rather than assumed -- a vol ceiling plus a vol-normalised band is one
+quantity entering the gate twice.
+
+WHY `n_slots = 5`. Shared with this family, and load-bearing here: at 5 slots the
+predicted starvation is visible in `days_flat` and entry count; at 1 slot 4.7
+candidates a session would comfortably fill the book and the failure mode would
+be invisible.
+
+PASS/FAIL, declared before the run. FAIL on entry count below ~60% of base --
+which is the expected outcome. If it starves AND scores better per campaign, the
+verdict is the `min_iv_rank` verdict: the signal may be real and the veto is the
+wrong instrument, in which case the follow-up is a preference, not a wider band.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_dip_z_band]
+value = [-1.5, -0.25]
+why = """
+Enter only when the close sits between 0.25 and 1.5 of the name's own 21-day
+sigmas BELOW its 21-day mean.
+
+-0.25: shallower than that is not a dip, it is noise, and the whole argument is
+about being paid for weakness. -1.5: deeper than that on a 21-day horizon is not
+a dip either -- it is the move the put was not priced for.
+
+Taken verbatim from the pre-registered brief rather than re-derived from the
+measured distribution, deliberately. The measurement (median dip_z +0.371, band
+keeps 13.0% of days) was taken AFTER the band was written down, and moving the
+band to fit what was found would convert a pre-registered test into a fitted one.
+The measurement is reported alongside the result instead.
+
+Sigmas, not percent, because that is the entire candidate: the same band has to
+mean the same thing in a 13%-vol name and a 47%-vol one.
+"""
+since = "2026-08-15"
+source = "2026-08-15 -- Weather-gate labelling, ten candidates, build brief"

@@ -1,0 +1,30 @@
+name = "iv-ranker-tp-25"
+question = "Does taking profit at 25% beat the live 60% under the ranker?"
+base = "iv-ranker"
+status = "superseded"
+created = "2026-08-09"
+updated = "2026-08-14"
+touches = ["take-profit"]
+note = """
+IMPORTED by bench/salvage.py from the 2026-08-09 ten-arm grid
+(`scratchpad/run_wheel_grid_n1.py`, row 6: TP 25%).
+
+Its scorecard is stamped **is_evidence = false** and carries no config hash, so
+`bench promote` refuses it twice over. That is not a judgement on the number --
+it is that the harness recorded no engine sha, no data fingerprint and no config
+hash, so nobody can tell what produced it. To make it evidence, re-run it:
+`bench run iv-ranker-tp-25`.
+
+JUDGE ON Sharpe and return-per-drawdown, not total return. Delta behaves as a
+leverage dial in this engine, so the 0.40-delta arms top the return column by
+construction -- which is exactly how the original sweep table became unreadable."""
+
+[ops]
+tier = "full"
+n_slots = 1
+
+[knobs.take_profit_pct]
+value = 0.25
+why = "Grid row 6 (TP 25%): one knob moved off the live value (0.6 -> 0.25) with everything else held, so a cliff shows up as one bad neighbour rather than as a bad corner of a sweep."
+since = "2026-08-09"
+source = "grid row 6"

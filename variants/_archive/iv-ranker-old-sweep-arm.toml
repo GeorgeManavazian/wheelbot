@@ -1,0 +1,42 @@
+name = "iv-ranker-old-sweep-arm"
+question = "Does the old sweep's +95.4% corner (0.40 / 7 / 25%) survive the live gates?"
+base = "iv-ranker"
+status = "superseded"
+created = "2026-08-09"
+updated = "2026-08-14"
+touches = ["dte"]
+note = """
+IMPORTED by bench/salvage.py from the 2026-08-09 ten-arm grid
+(`scratchpad/run_wheel_grid_n1.py`, row 8: old sweep arm).
+
+Its scorecard is stamped **is_evidence = false** and carries no config hash, so
+`bench promote` refuses it twice over. That is not a judgement on the number --
+it is that the harness recorded no engine sha, no data fingerprint and no config
+hash, so nobody can tell what produced it. To make it evidence, re-run it:
+`bench run iv-ranker-old-sweep-arm`.
+
+JUDGE ON Sharpe and return-per-drawdown, not total return. Delta behaves as a
+leverage dial in this engine, so the 0.40-delta arms top the return column by
+construction -- which is exactly how the original sweep table became unreadable."""
+
+[ops]
+tier = "full"
+n_slots = 1
+
+[knobs.put_delta]
+value = 0.4
+why = "Grid row 8 (old sweep arm): one knob moved off the live value (0.3 -> 0.4) with everything else held, so a cliff shows up as one bad neighbour rather than as a bad corner of a sweep."
+since = "2026-08-09"
+source = "grid row 8"
+
+[knobs.target_dte]
+value = 7
+why = "Grid row 8 (old sweep arm): one knob moved off the live value (11 -> 7) with everything else held, so a cliff shows up as one bad neighbour rather than as a bad corner of a sweep."
+since = "2026-08-09"
+source = "grid row 8"
+
+[knobs.take_profit_pct]
+value = 0.25
+why = "Grid row 8 (old sweep arm): one knob moved off the live value (0.6 -> 0.25) with everything else held, so a cliff shows up as one bad neighbour rather than as a bad corner of a sweep."
+since = "2026-08-09"
+source = "grid row 8"

@@ -1,0 +1,80 @@
+name = "liq-floor-off"
+question = "With BOTH absolute floors gone and only the per-account size cap standing, how much menu does the floor cost in total -- and does the bot start taking fills it could never have got?"
+base = "frozen"
+status = "testing"
+created = "2026-08-16"
+updated = "2026-08-16"
+note = """
+THE BOUND, not a proposal. This arm removes both absolute liquidity floors --
+open interest AND volume -- leaving only `liq_max_pct_of_open_interest = 0.10`
+and `liq_max_pct_of_volume = 0.25`, which are per-account and size-aware.
+
+It answers one question the other two cannot: how much of the 18.7-a-session
+refusal rate is the floor at ALL, versus the stages after it? It is the
+upper bound on what any loosening can buy, and every result from `liq-oi-off`
+and `liq-oi-50` should be read as a fraction of this one.
+
+WHAT IS ACTUALLY LEFT STANDING. Not nothing. The size cap refuses outright when
+a single contract is already too large a share of the listed market, so the
+effective floor becomes:
+
+    open interest >= 10        volume >= 4
+
+for a one-contract order, rising with order size -- 40 open interest allows 4
+contracts, 250 allows 25. That is the shape the original review case called for
+and could not express: "an ungated bot requested 757 DOW contracts against ~84
+a day traded" is a statement about SIZE, and `liquidity_ok` is never passed a
+quantity to reason about (`liquidity_ok(chain, date, contract, cfg)` -- there is
+no order in the signature).
+
+WHY THIS ARM IS THE RISKY ONE, STATED PLAINLY. Dropping the volume leg means a
+strike that traded 4 contracts today can be sold. The backtest will fill it at
+the stored quote. Whether a real account could have is exactly the question the
+A2 review was written about, and this arm is where unfillable orders would enter if
+they enter anywhere. It is included to BOUND the effect, and it should be
+promoted only if it beats the single-leg arms by a margin large enough to be
+worth that exposure -- which I doubt, and the doubt is recorded here before the
+run rather than after it.
+
+THE EVIDENCE THAT WOULD CONVICT IT. `bench replay` re-decides real live days
+against real captured chains. If this arm's entries are concentrated in strikes
+whose volume is in single digits, the fills are theoretical and the return is
+theoretical with them. That check is REQUIRED before this arm may be promoted;
+`bench policy` already demands a replay for anything touching liquidity.
+
+THE BAR, DECLARED BEFORE THE RUN.
+  MECHANISM: pool_depth_mean must rise above 3.52; pool_starved_pct must fall
+    below 0.235. (If it does not, the floor is not the constraint and the whole
+    line of investigation is wrong -- which would be the most useful outcome
+    here.)
+  OUTCOME: campaigns above 104, ret_per_maxdd not worse than 0.44,
+    pnl_per_slotday_clean at or above 90% of $42.69.
+  PROMOTION ADDITIONALLY REQUIRES: a replay showing entries are not clustered
+    in single-digit-volume strikes.
+  NOT SUFFICIENT: total return alone, and specifically not a return that beats
+    the single-leg arms by a few points -- the exposure is asymmetric.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.liq_min_open_interest]
+unset = true
+why = """
+OFF. See `liq-oi-off` for the argument about open interest being an
+accumulation measure applied to short-dated contracts. Here it is off as half
+of the bound rather than as a proposal in its own right.
+"""
+source = "capacity-baseline scorecard live__366f1c919ec5761a"
+
+[knobs.liq_min_volume]
+unset = true
+why = """
+OFF. This is the leg the A2 review actually justified on its own terms, and
+turning it off is the risky half of this arm -- a strike that traded 4 contracts
+today becomes sellable, at a quote the backtest will honour and a real account
+might not. It is off ONLY to bound the total cost of the absolute floors. The
+per-account cap still refuses any order taking more than 25% of the day's
+volume, so a one-contract order still requires volume >= 4.
+"""
+source = "capacity-baseline scorecard live__366f1c919ec5761a"

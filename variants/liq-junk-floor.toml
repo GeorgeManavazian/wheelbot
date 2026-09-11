@@ -1,0 +1,132 @@
+name = "liq-junk-floor"
+question = "Set the absolute floor to exactly what the per-account size cap already implies -- open interest 10, volume 4 -- so the floor stops rationing the menu and goes back to being a junk filter. Does it match `liq-floor-off` without inheriting its two defects?"
+base = "frozen"
+status = "promoted"
+created = "2026-08-16"
+updated = "2026-08-17"
+note = """
+THE PROPOSAL. The other three arms are diagnostics; this is the one meant to
+ship. It keeps the floor, and sets it to the level the size cap already
+enforces:
+
+    liq_min_open_interest  250 -> 10      (10 x 0.10 = 1 contract)
+    liq_min_volume          25 -> 4       ( 4 x 0.25 = 1 contract)
+
+Neither number is fitted. Both are arithmetic: `liquidity_size_cap` computes
+`int(open_interest * 0.10)` and `int(volume * 0.25)` and REFUSES at zero, so a
+one-contract order already requires OI >= 10 and volume >= 4 today. This arm
+does not loosen the effective constraint at all on the smallest order -- it
+deletes a SECOND, size-blind constraint sitting on top of the size-aware one.
+
+WHY NOT JUST UNSET THEM (`liq-floor-off`). Two defects, both found by reading
+the code after the run rather than before it, and both are the reason this arm
+exists:
+
+1. UNSETTING SILENTLY DISABLES THE TWO-SIDED-MARKET CHECK.
+   `liquidity_ok` opens with
+
+       if (liq_max_rel_spread is None and liq_min_open_interest is None
+               and liq_min_volume is None):
+           return True, ""
+
+   so with all three off it returns before reaching
+
+       if not (den > 0) or ask < bid:
+           return False, "no_two_sided_market"
+
+   A contract with no bid, or a crossed market, stops being refused -- and
+   `liq_max_rel_spread` has been off since 2026-08-11, so unsetting the other
+   two is enough to turn the check off entirely. Measured on the liq-floor-off
+   fill log, no entry actually had a zero bid (the credit floors caught them
+   first), so this is a latent hole rather than a live one. A latent hole that
+   depends on two unrelated knobs both being off is exactly the shape of the
+   zombie-gate failures this project has already paid for twice.
+
+2. UNSETTING CHANGES WHAT MISSING DATA MEANS. With a threshold SET, a
+   missing or NaN field FAILS -- "a contract whose liquidity cannot be measured
+   is not one to sell." With it unset, that leg is skipped. The OI store is
+   98.1% complete on the live window and materially worse before 2024-08, so
+   this is the difference between a declared data divergence and a silent one.
+
+Setting the floors to 10 and 4 keeps both behaviours and removes the rationing.
+
+WHAT THE RATIONING WAS. From `capacity-baseline`, per session on which the bot
+had a slot to fill: 525 names scanned, 23.1 reached the liquidity floor, 18.7
+were refused there -- 81% -- leaving a menu of 3.5 against 5 slots, thinner
+than the free slots on 23.5% of sessions.
+
+Why the entry leg was the wrong place for it anyway. `bench run --check-fills`
+on the live config, all 257 fills:
+
+  * SELL_PUT  -- the leg the floor guards -- is ALREADY clean. The size cap
+    held every order at or under 25.0% of the day's volume, 104 of 104, no
+    exceptions. Median order is 2.5% of the day's volume.
+  * SELL_CALL and CLOSE_PUT are not gated at all, and that is where the
+    impossible fills are: 30 CLSK calls written into a 3-contract day (1,000%
+    of volume), 5 OXY calls on a strike with ZERO open interest, a FAST
+    buy-back of 3 contracts when 2 traded, against a zero bid. 15% of live
+    campaigns touch at least one such fill.
+
+So the floor is a second lock on the door that already has a working one, and
+there is no lock on the other two doors. Moving it to those doors is separate
+work (the close leg cannot take a veto -- you cannot decline to exit a position
+you already hold -- so it needs a cost model, not a refusal). This arm only
+stops the second lock rationing the menu.
+
+THE BAR, DECLARED BEFORE THE RUN.
+  MECHANISM: pool_depth_mean must rise well above 3.52 and land near
+    liq-floor-off's 18.7; pool_starved_pct must fall below 0.235.
+  REALISM (the reason this arm exists -- from --check-fills):
+    * no SELL_PUT above 25% of the day's volume (the size cap must still hold)
+    * no SELL_PUT into a zero-volume strike
+    * SELL_PUT minimum open interest >= 10 and minimum volume >= 4, by
+      construction -- if either is violated the arm is refuted, because the
+      arithmetic behind the numbers is wrong
+  OUTCOME: campaigns above 104; ret_per_maxdd not worse than 0.44.
+  EXPLICITLY NOT A BAR: total return, and the return RANKING across the
+    liquidity arms generally. The three-arm ladder 250 / 50 / off came back
+    NON-MONOTONE on ret_per_maxdd (0.44 / 0.22 / 1.03) -- the middle rung worse
+    than both neighbours -- which is the signature of one assigned name holding
+    a slot for months rather than of a dial. The mechanism and realism columns
+    were monotone; the money column was not, and only the monotone ones are
+    being acted on here.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.liq_min_open_interest]
+value = 10.0
+why = """
+250 -> 10. NOT a tuning choice: `liquidity_size_cap` refuses when
+`int(open_interest * liq_max_pct_of_open_interest)` is zero, and at 0.10 that
+is open interest below 10. So 10 is the floor the bot already enforces on a
+one-contract order, written down explicitly instead of left implicit. Keeping
+the knob SET (rather than unsetting it) preserves two behaviours that vanish
+when it is None: the two-sided-market check, and refusal on a missing or NaN
+field. The original junk cases the 250 floor was justified by -- REGN at 1 open
+interest, MTD at 0 -- are still refused.
+"""
+source = "arithmetic of liq_max_pct_of_open_interest=0.10; capacity-baseline scorecard"
+
+[knobs.liq_min_volume]
+value = 4.0
+why = """
+25 -> 4, by the same arithmetic: `int(volume * 0.25)` is zero below 4, so a
+one-contract order already requires 4 contracts traded. Volume is the honest
+liquidity test for this bot -- unlike open interest, it is not an accumulation
+measure and so does not penalise an 11-day contract for being 11 days old --
+and it stays SET here, at the level the size cap enforces, rather than being
+switched off as in `liq-floor-off`.
+"""
+source = "arithmetic of liq_max_pct_of_volume=0.25; capacity-baseline scorecard"
+
+[[evidence]]
+kind = "promotion"
+date = "2026-08-17"
+verdict = "Owner decision 2026-08-17: ship it. The old bar was blocking too much for no reason, the other rule already covers it, and I am not buying it for the profit number. The floor goes from 250/25 open interest and volume to 10/4 -- the exact points at which the per-account size cap (10% of open interest, 25% of volume) reaches one contract, so the bot was already refusing everything below them. Proof it is not a loophole: liq-junk-floor trades a book IDENTICAL to liq-floor-off -- 142 entries, same date, ticker, strike and size on every one, same P&L to the cent -- because names below OI 10 / volume 4 were never tradeable anyway. Lowering the floor therefore buys everything that removing it buys, while keeping two behaviours that removal destroys: liquidity_ok returns early when all three thresholds are None and silently disables its own no_two_sided_market check, and an unset threshold stops refusing missing/NaN fields. Measured live tier, n_slots=5, engine 431c75f634ed clean: menu depth 3.5 -> 11.7, starved sessions 23.5% -> 5.0%, campaigns 104 -> 142, days_uncovered 1,037 -> 641, idle slot-days 47 -> 7. Every realism bar declared before the run was met exactly -- minimum entry open interest 10, minimum volume 4, maximum order 25.0% of the day's volume and 10.0% of open interest, zero entries into a zero-volume strike. NOT PROMOTED FOR THE RETURN. ret_per_maxdd went 0.44 -> 1.03 but the ladder 250/50/10-4 is non-monotone (0.44 / 0.22 / 1.03), the middle rung worse than both neighbours, which is one assigned name holding a slot for months rather than a dial; the mechanism and realism columns are monotone and this rests on those. Declared cost: earnings per slot-day on clean campaigns fall $42.70 -> $35.93, and campaigns touching an implausible fill rise 10% -> 17% -- though every such fill in every arm is a SELL_CALL or CLOSE_PUT, both ungated, and not one is an entry. That is the next piece of work, not a defect of this one."
+scorecard = "live/76c904270c347994"
+engine = "431c75f634ed"
+data = "194898688a1b3ca0"
+sharpe_delta = "+0.387"
+ret_per_maxdd_delta = "+0.587"

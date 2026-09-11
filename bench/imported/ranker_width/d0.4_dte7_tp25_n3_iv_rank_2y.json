@@ -1,0 +1,26 @@
+{
+ "tag": "d0.4_dte7_tp25_n3_iv_rank_2y",
+ "put_delta": 0.4,
+ "target_dte": 7,
+ "take_profit": 0.25,
+ "n_slots": 3,
+ "rank_by": "iv_rank",
+ "total": 0.007292328895994071,
+ "cagr": 0.003661374827000685,
+ "sharpe": 0.15227136528084836,
+ "maxdd": -0.37072115417335316,
+ "ret_per_dd": 0.019670657619349396,
+ "campaigns": 84,
+ "days_flat": 0,
+ "days_uncovered": 845,
+ "n_days": 501,
+ "neutral_ranks": 4,
+ "gated_size": 0,
+ "gated_illiquid": 1571,
+ "by_year": {
+  "2024": -0.011591970066867296,
+  "2025": 0.28596548269710187,
+  "2026": -0.20721719853914455
+ },
+ "secs": 35.9
+}

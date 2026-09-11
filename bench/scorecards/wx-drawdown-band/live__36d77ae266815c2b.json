@@ -1,0 +1,167 @@
+{
+ "variant": "wx-drawdown-band",
+ "base": "frozen",
+ "tier": "live",
+ "is_evidence": true,
+ "created": "2026-08-16T19:37:18+00:00",
+ "arms": {
+  "variant": {
+   "total_return": 0.01455175854459756,
+   "cagr": 0.0076939065937491335,
+   "sharpe": 0.12781024569122526,
+   "max_drawdown": -0.17124455436485708,
+   "ret_per_maxdd": 0.08497647471809988,
+   "pnl": 1310.399316096562,
+   "final_equity": 101310.39931609656,
+   "n_days": 475,
+   "by_year": {
+    "2024": -0.031893499585252894,
+    "2025": 0.1604540001344572,
+    "2026": -0.10467985342941188
+   },
+   "worst_year": -0.10467985342941188,
+   "campaigns": 94,
+   "assignments": 25,
+   "assignment_rate": 0.26595744680851063,
+   "days_flat": 0,
+   "days_uncovered": 1136,
+   "n_trades": 364,
+   "n_warnings": 2619,
+   "warning_counts": {
+    "entry_gated_illiquid": 1639,
+    "call_gated_unclosable": 737,
+    "covered_call_unreachable": 176,
+    "entry_gated_earnings": 45,
+    "entry_gated_unclosable": 11,
+    "entry_gated_low_yield": 8,
+    "entry_gated_intrinsic": 1,
+    "expiry_settled_reachback": 1,
+    "expiry_resolved_late": 1
+   },
+   "final_shares": {
+    "CMG": 200.0,
+    "KWEB": 700.0,
+    "PG": 100.0,
+    "CMCSA": 1300.0,
+    "AWK": 200.0
+   },
+   "secs": 28.3
+  },
+  "base": {
+   "total_return": -0.04367859174631328,
+   "cagr": -0.023415455409717678,
+   "sharpe": -0.015208327952285843,
+   "max_drawdown": -0.2738776527242933,
+   "ret_per_maxdd": -0.15948213120653393,
+   "pnl": -4590.299537326209,
+   "final_equity": 95409.70046267379,
+   "n_days": 475,
+   "by_year": {
+    "2024": 0.018808745692510564,
+    "2025": 0.10167354381442517,
+    "2026": -0.16567021390032888
+   },
+   "worst_year": -0.16567021390032888,
+   "campaigns": 109,
+   "assignments": 20,
+   "assignment_rate": 0.1834862385321101,
+   "days_flat": 0,
+   "days_uncovered": 1146,
+   "n_trades": 404,
+   "n_warnings": 3246,
+   "warning_counts": {
+    "entry_gated_illiquid": 2175,
+    "call_gated_unclosable": 792,
+    "covered_call_unreachable": 170,
+    "entry_gated_earnings": 54,
+    "entry_gated_intrinsic": 28,
+    "entry_gated_unclosable": 15,
+    "entry_gated_low_yield": 12
+   },
+   "final_shares": {
+    "CMG": 600.0,
+    "ABNB": 100.0,
+    "SNAP": 4200.0,
+    "KWEB": 800.0
+   },
+   "secs": 46.6
+  }
+ },
+ "provenance": {
+  "engine": {
+   "sha": "dd7e68ed248f",
+   "branch": "feat/ticker-dossiers",
+   "dirty": true,
+   "dirty_files": [
+    "ench/blocks.toml",
+    "bench/replay.py",
+    "bench/scorecard.py",
+    "bench/tests/test_bench_blocks.py",
+    "bench/variant.py",
+    "live/market_live.py",
+    "live/run_chain_snapshot.py",
+    "live/run_daily.py",
+    "src/engine_v2/options/fills.py",
+    "src/engine_v2/options/portfolio.py",
+    "src/engine_v2/options/wheel.py",
+    "src/engine_v2/regime/state.py"
+   ]
+  },
+  "config_hash": {
+   "variant": "36d77ae266815c2b",
+   "base": "3f779976c6bd9b8e"
+  },
+  "data": {
+   "hash": "194898688a1b3ca0",
+   "n_files": 25360,
+   "bytes": 3763045258,
+   "n_tickers": 529,
+   "stores": [
+    "data/options/chains",
+    "data/options/open_interest"
+   ]
+  },
+  "env": {
+   "python": "3.12.13",
+   "pandas": "3.0.3",
+   "host": ""
+  }
+ },
+ "conditions": {
+  "start": "2024-08-01",
+  "end": "2026-07-01",
+  "n_slots": 5,
+  "capital": 100000.0,
+  "selector": "chop",
+  "max_dte": 15,
+  "n_tickers_requested": 531,
+  "n_tickers_loaded": 529,
+  "dropped": {
+   "no_chain": 1,
+   "no_closes": 0,
+   "no_state": 1
+  }
+ },
+ "divergences": [
+  "open_interest is present on 98.1% of chain rows (0 of 529 tickers have no column at all). liquidity_ok REFUSES when a threshold is set and the field is missing or NaN, so every one of the other 1.9% is barred from entry -- on data availability, not on liquidity. The OI store reaches near-full coverage only from 2024-08; the `live` tier starts there for this reason. Visible in the refusal counts as entry_gated_illiquid.",
+  "earnings calendar knows 528 of 529 universe names; the other 1 read as UNKNOWN and in_blackout ALLOWS on unknown. This is identical to what the live bot does with the same file, so it is faithful rather than a divergence -- but it is not full protection."
+ ],
+ "wall_secs": 74.93873620033264,
+ "notes": "",
+ "schema": 1,
+ "delta": {
+  "sharpe": 0.14301857364351112,
+  "ret_per_maxdd": 0.2444586059246338,
+  "total_return": 0.05823035029091084,
+  "cagr": 0.03110936200346681,
+  "max_drawdown": 0.10263309835943624,
+  "worst_year": 0.06099036047091699,
+  "pnl": 5900.698853422771,
+  "campaigns": -15.0,
+  "assignments": 5.0,
+  "assignment_rate": 0.08247120827640053,
+  "days_flat": 0.0,
+  "days_uncovered": -10.0,
+  "n_trades": -40.0
+ }
+}

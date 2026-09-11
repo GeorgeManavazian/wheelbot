@@ -1,0 +1,15 @@
+#!/bin/sh
+# The wheel bench. Run from anywhere; it finds the repo.
+#
+#   scripts/wheelbench frozen
+#   scripts/wheelbench run my-variant --tier smoke
+#
+# Put it on your PATH with:  ln -s "$PWD/scripts/wheelbench" /usr/local/bin/bench
+set -e
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+cd "$ROOT"
+
+PY="$ROOT/.venv/bin/python"
+[ -x "$PY" ] || PY=python3
+
+PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" exec "$PY" -m bench "$@"

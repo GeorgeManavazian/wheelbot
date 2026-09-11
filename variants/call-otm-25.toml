@@ -1,0 +1,197 @@
+name = "call-otm-25"
+question = "Does writing the covered call at 0.25 delta instead of 0.50 beat the live config, given the call cap surrendered $78,635 of upside across 47 of 47 call-aways while the whole call leg collected only $49,598?"
+base = "frozen"
+status = "rejected"
+created = "2026-08-15"
+updated = "2026-08-17"
+touches = ["exit"]
+verdict = """
+REJECTED 2026-08-17 (Analyzer, batch 1; fresh card
+live__224aea69f0206fc6.json under engine 0838351260cf, dirty=false -- the
+__b86d5296 cards are the stale pre-batch evidence). call_delta 0.50->0.25
+under hold-to-expiry. Catastrophic and mechanistic: a low-delta call almost
+never gets exercised, and exercise is the only door out of assigned stock --
+campaigns collapsed 142->58, days_uncovered 1,293, no_credit 808, -24.64%
+total, 2026 -29.5%. Zero realized losers, all damage in permanent slot
+occupation -- the exact inverse failure of the stop family. The "pool depth
+fixed the exit-pair interaction" hypothesis is falsified: starvation is
+slot-side (held shares), not pool-side. Under call_take_profit_pct=1.0,
+call_delta=0.50 is load-bearing. KILLED at both rungs; revisit only if the
+call take-profit ever reverts.
+
+Dial note: 0.35 vs 0.25 are statistically the same disaster; the cliff is
+between 0.50 and 0.35.
+"""
+note = """
+GATE-CAMPAIGN BATCH 1, WAVE 1 (Analyzer bar v2, 2026-08-17). THIRD
+MEASUREMENT of this idea, re-run because the 2026-08-15 card below is stale
+TWICE over: the call_take_profit_pct=1.0 promotion (2026-08-16) and the 10/4
+liquidity floors (2026-08-17) both moved the base under it. What else
+changed: the starvation mechanism that priced the last measurement (95
+campaigns) was measured under a 3.5-deep, 23.5%-starved pool that no longer
+exists (11.7 deep, 5.0% starved); and calls-to-expiry is now live, which
+multiplies the events this knob prices -- every call runs to expiry, and 70%
+of the 78,635 dollars of forfeited upside sat in the ATM bucket.
+
+Run alongside `call-otm-35`: the response curve is 0.50 (base) -> 0.35 ->
+0.25, each point measured, never interpolated.
+
+THE BAR, DECLARED BEFORE THE RUN (Analyzer final version -- SUPERSEDES the
+2026-08-15 declared bar recorded further down, whose own verdict found it
+mis-specified). The batch's only P&L-shaped arm pair, so the strictest bar in
+the batch. PASS only if ALL:
+  * at BOTH widths (n5 and n20): total_return > base AND ret_per_maxdd > base
+  * better than base in >= 2 of 3 year-buckets (2024/2025/2026), with at
+    least one NON-2025 bucket improving
+  * days_uncovered <= 704
+  * campaigns >= 135
+  * MONOTONE response across 0.50 -> 0.35 -> 0.25: if 0.35 beats both
+    neighbours materially, it is a spike and both rungs die.
+A hair-pass is reported as a hair-pass, and no shortlist mention follows.
+
+Shared batch rules: at n5, total_return within base - 10pp is "not degraded";
+year-bucket rule: worse than base in at most 1 of 3 buckets by more than 3pp.
+
+--------------------------------------------------------------------------------
+
+VERDICT 2026-08-15: NOT PROMOTED. The declared bar passed on its literal terms
+and the bar was wrong. Recorded rather than acted on.
+
+  full tier, 2022-06-01 -> 2026-07-01, 529 of 531 names, n_slots 1
+  scorecard bench/scorecards/call-otm-25/full__b86d5296919daac8.json
+
+  metric            variant     base    delta
+  total_return      -26.13%  -27.02%   +0.89 +
+  sharpe              -0.12    -0.13   +0.01 +
+  ret_per_maxdd       -0.54    -0.55   +0.01 +
+  max_drawdown      -48.49%  -49.04%   +0.55 +
+  campaigns              18       20      -2
+  days_uncovered        540      549      -9
+  2022  -8.88 vs  -3.40 | 2023 -12.13 vs -15.97 | 2024 +29.33 vs +28.17
+  2025 +10.62 vs +10.06 | 2026 -36.00 vs -36.53
+
+Return improved, four of five years improved, ret/DD did not worsen. All three
+declared conditions met. It is still not evidence, for three reasons:
+
+1. n = 18 CAMPAIGNS. The hypothesis was built on 47 call-aways at n_slots=5 over
+   five years; the bench measures at n_slots=1, which yields 18 campaigns in
+   four years and perhaps a handful of call-aways. The mechanism this variant
+   exists to test cannot be resolved at that sample. THE BAR SHOULD HAVE CARRIED
+   A SAMPLE FLOOR AND DID NOT -- that is a defect in the bar, and promoting on a
+   bar known to be mis-specified is exactly the move the -40% stop taught this
+   project not to make.
+2. +0.89 POINTS ON A -27% BASE. The delta is 3% of the magnitude of the base
+   arm's own loss. Both arms lose a quarter of the account.
+3. THE ONE DISAGREEING YEAR DISAGREES BY MORE THAN THE HEADLINE. 2022 is 5.48
+   points WORSE, against a total-return improvement of 0.89.
+
+WHAT WOULD MAKE IT DECIDABLE: this variant needs a width the bench does not
+currently offer. `[ops] n_slots = 1` is the owner's 2026-08-09 choice and
+plain.toml states its own limit out loud -- "a win at n=1 is a win at n=1 and
+says nothing about width". For a mechanic that only fires on assigned stock,
+n=1 is not a narrow reading, it is an empty one. Re-run at n_slots=5 before
+this question is answered either way.
+
+--------------------------------------------------------------------------------
+
+Every exit variant measured to date has attacked the LEFT tail -- stops, ladders,
+liquidation, time triggers. All of them are fits: the -40% stop fires 3 times in
+272 campaigns, the ITM ladder loses, and an oracle that erases every dollar of
+loss ever taken still lands at $170,956 against buy-hold SPY's $174,894.
+
+This variant attacks the other side, which nobody has measured. Priced from
+`results/best_run/trades.csv` against the split-adjusted close on each
+CALLED_AWAY date:
+
+    upside surrendered to the call cap   +$78,635   47 of 47 events
+    total call premium ever collected    +$49,598   238 writes
+    covered-call leg, net                -$29,037   vs +$35,504 total P&L
+    median spot/strike at call-away        +4.87%   p90 +17.25%
+    forfeit concentration                 top 3 = 31%, top 10 = 57%
+
+The 47-of-47 is the whole argument. A rule that fires on every single event with
+a median of +$1,135 is a mechanism; the -40% stop fires on three campaigns and is
+a fit. Concentration is low enough that dropping the three largest still leaves
+$54,044.
+
+WHY THE CAP SITS AT-THE-MONEY. call_delta=0.50 is ATM by construction, and
+call_min_strike="basis" only ever pushes the strike UP, never out. So the bot
+writes ATM the moment it is above net basis and gets called away at roughly
+breakeven, while the far-OTM call the floor forces when it is underwater is worth
+a penny and A3b refuses it as unclosable (portfolio.py:530). Covered exactly when
+it does not need to be, uncovered exactly when it does.
+
+THE HONEST CEILING, stated in advance so the result is not oversold. At the
+unreachable extreme of this lever -- never write a call at all -- the book keeps
+$78,635 and gives back $49,598, landing near $159,665 against SPY's $174,894. So
+this knob CANNOT on its own close the gap to buy-and-hold. It is worth at most
+~$29,037 of a ~$44,266 gap, and only in a limit that also removes the strategy's
+only exit from assigned stock. That is why this is one bench run and not a sweep.
+
+THE COST SIDE, which is real. A 0.25-delta call collects materially less premium
+per write against unchanged per-contract friction ($0.65 commission + $0.05
+fees per side), so the minimum-credit arithmetic in tp_exit_feasible bites harder
+and A3b will refuse more calls, not fewer -- expect naked slot-days to RISE. It
+is also called away less often, which is the wheel's only mechanism for freeing
+an assigned slot, and the wheel's return comes from capital turnover. Whether the
+retained upside pays for fewer turns and thinner premium is exactly what the
+scorecard measures.
+
+DECLARED PASS/FAIL, before the run. PASS only if total return improves AND does
+so in >= 3 of 5 years AND ret/DD does not worsen. FAIL on a blended-return
+improvement that is 2-of-5 years or worse -- that is the shape the
+call_take_profit_pct arm had (+14.1% vs +11.2% blended, 3 of 5 years no better),
+and it is not evidence.
+
+WINDOW. Run on `full` or later, never on a window starting before 2024-08 with
+liq_min_open_interest=250 on: the OI store covers 86 of 534 tickers before then
+and the floor refuses every contract whose OI is missing.
+
+NOT A SUBSTITUTE FOR SELECTION. 2026-08-04 measured blind put-selling at -11.8
+bps per trade, and the assigned phase as a whole is -$5,430 across 54 campaigns
+while consuming 75% of book capacity. This variant makes the exit leg less bad.
+It does not make the strategy good.
+"""
+
+# OVERRIDES THE SHARED [ops] (plain.toml:36-40) ON ONE FIELD: n_slots 1 -> 5.
+# It is a condition of the experiment, not part of the strategy, which is why it
+# sits here and not in the note. The first full-tier run of this variant
+# inherited n_slots=1 and produced 18 campaigns; a mechanic that only fires on
+# ASSIGNED STOCK cannot be resolved at that width -- at n=1 a single assigned
+# name occupies the only slot and the held-exclusion rule leaves the book with
+# nothing else to do (bench/scorecard.py:104). The hypothesis was built on 47
+# call-aways at n_slots=5, so the test has to run at the width the claim was
+# made at.
+#
+# The base arm runs under the SAME ops -- bench/run.py:259 passes one `ops` dict
+# to every arm -- so variant-vs-base stays a fair comparison. It is NOT
+# comparable to other variants' scorecards, which are all n=1. That is the price
+# of the override, and it is worth paying for a mechanic n=1 cannot see at all.
+[ops]
+n_slots = 5
+
+[knobs.call_delta]
+value = 0.25
+why = """
+0.50 is at-the-money; 0.25 is roughly one standard deviation out at the live
+11-day tenor. That is the smallest change that meaningfully moves the cap off
+spot while still writing a call with real premium in it.
+
+Chosen, not fitted. It is a single round value on a knob with no measured
+neighbours -- there is no 0.20/0.25/0.30 sweep behind it and deliberately so,
+because 54 assigned campaigns cannot support a tuned number and the -40% stop is
+what happens when one is tuned anyway. If 0.25 passes, the next question is
+whether its neighbours agree; if they do not, it was a spike and it dies.
+
+The measured motivation is the call-away distribution, not a search: median
+spot/strike at call-away is +4.87% with p90 +17.25%, so at 0.50 delta the median
+called-away campaign gave back nearly 5% of notional and the top decile gave back
+17%. Moving the strike out is the direct way to keep that.
+
+Counter-argument, and it is why this is a question. Less premium per write
+against the same fixed friction means tp_exit_feasible refuses more calls, and
+fewer call-aways means assigned slots stay occupied longer -- 4,483 of 6,975
+campaign-days already sit in the called-away bucket at $7.53/day against
+$25.11/day for puts that were never assigned. This variant could easily make the
+capacity problem worse while making the P&L per resolved campaign better.
+"""

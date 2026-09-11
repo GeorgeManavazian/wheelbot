@@ -1,0 +1,67 @@
+name = "wx-ma-band"
+question = "Does defining chop as CONVERGENCE -- the 9/21/50-day means inside a narrow band -- beat defining it as whatever is left over after uptrend and downtrend are removed?"
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C5 of the ten-candidate brief. MEASURE THE THING THE LABEL CLAIMS TO MEAN.
+
+"Range-bound" means the moving averages have CONVERGED. The current definition
+tests two orderings and nothing else, and a stock in a fast move satisfies them
+for weeks while the 50d catches through the 200d -- which is the exact failure
+the `chop_max_ma_spread` docstring already describes (`state.py`) and which is
+currently OFF. This knob measures the band directly, across three horizons
+(9/21/50) rather than the one 50/200 pair, and expresses it as a fraction of
+price so it means the same thing on a $10 stock and a $400 one.
+
+MEASURED SPREAD on the 17,465 gate-passing ticker-days (2026-08-15): ma_band p25
+0.026, p50 0.045, p75 0.070, p90 0.100. So the gate presently admits days whose
+three means are 10% of price apart and calls that range-bound.
+
+THE UNFAVOURABLE PRIOR, stated before the run rather than after. The nearest
+existing knob, `chop_max_ma_spread`, was A/B'd on 2026-07-18 and "went negative";
+it is off in the live config for that reason. This is a different quantity -- a
+three-horizon band including the fast means, rather than the single 50/200 gap --
+but the prior is genuinely against it and must be reported alongside whatever
+this run returns. If it wins, the first question is whether it wins for a reason
+`chop_max_ma_spread` did not have.
+
+WHY `n_slots = 5`. Shared with this family. Both arms share the setting.
+
+PRE-DECLARED POOL EFFECT: a 0.05 band keeps 55.8% of gate-passing days, ~20 of
+~36 candidates per session against 5 slots. That is just under the brief's ~60%
+entry-count floor at the POOL level, but pool share and entry count are not the
+same quantity -- 20 candidates for 5 slots is still four times oversubscribed.
+If entry count nevertheless falls below 60% of the base arm, this arm FAILS on
+the declared criterion regardless of its P&L.
+
+PASS/FAIL, declared before the run. FAIL on entry count below ~60% of base. FAIL
+if it does not lower assignment_rate -- convergence is a claim about the SHAPE of
+the price path, and if a converged name is assigned as often as a diverging one
+the definition is not carrying weight. P&L last, year by year.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_max_ma_band]
+value = 0.05
+why = """
+Refuse an entry unless (max - min) of the 9, 21 and 50-day means is within 5% of
+price.
+
+Chosen as a MEASURED PERCENTILE: 0.045 is the median band across the ticker-days
+this gate currently admits, and 0.05 is the round number beside it. So the knob
+reads "the tighter half of the pool by convergence" -- restated from the data
+rather than tuned against a score.
+
+The alternatives were measured at the same time and rejected as too aggressive
+for a first run: 0.03 keeps 30.1% of gate-passing days and 0.02 keeps 17.0%,
+both of which would test starvation rather than convergence. 0.08 keeps 81.6%
+and is close enough to inert to prove little. If 0.05 passes, 0.03 and 0.08 are
+the plateau check and must agree.
+"""
+since = "2026-08-15"
+source = "p50 of gate-passing ma_band, live tier window, measured 2026-08-15"

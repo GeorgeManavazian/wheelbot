@@ -1,0 +1,89 @@
+name = "wx-no-taxonomy"
+question = "If the bull/chop/downtrend label is deleted and the gate reads three direct facts instead -- drawdown band, absolute vol ceiling, fast leg not falling -- does anything get worse? That is the upper bound on what re-labelling can buy."
+base = "frozen"
+status = "testing"
+created = "2026-08-15"
+updated = "2026-08-15"
+touches = ["entry"]
+note = """
+C11 of the ten-candidate brief. THE UPPER BOUND, NOT A SHIPPING CANDIDATE.
+
+The three-way taxonomy exists for the Chameleon router, which is parked. A put
+seller does not need a regime NAME, it needs a few numbers. Every label is a
+lossy compression of those numbers, and this project has now twice been misled by
+what a label implied rather than what it meant: once by "chop" reading as
+range-bound when it means residual, and once by an early pass that appeared to
+show uptrend and downtrend entries passing the gate -- a reading that did not
+hold up, and was only ever plausible because nobody could say
+from the label what the gate was actually testing.
+
+WHAT THIS ARM IS FOR. It bounds the exercise. If deleting the taxonomy and
+gating on three direct facts is no worse than the live gate, the label is not
+carrying weight and the honest read of C1-C10 changes: they are then competing
+to replace something that was doing nothing. If it is much worse, the label is
+load-bearing and the candidates that keep it are the ones worth pursuing.
+
+IT VIOLATES THE OWNER'S STANDING BRIEF that the bot stays simple, and the brief
+says to include it as an upper bound rather than as a proposal. That is how the
+verdict will be written whatever the number says: this arm is not promotable on
+its own result. Recorded here so the temptation is refused in advance.
+
+WHY `n_slots = 5`. Shared with this family. Both arms share the setting.
+
+PRE-DECLARED POOL EFFECT, and it is the one direction nothing else in this family
+goes: dropping the label ADMITS names the gate currently refuses -- every clean
+uptrend and every clean downtrend that clears the three facts. Expect entry count
+to RISE, days_flat to fall, and the risk to be on the downtrend side, which is
+exactly what `chop_max_fast_fall` was introduced to guard in 2026-07-18.
+
+PASS/FAIL, declared before the run. There is no pass here, only a reading. Report
+entry count, assignment_rate and ret/DD against the base, and state plainly
+whether the label earns its place. If assignment_rate rises sharply, the label
+was doing the job the brief credits it with; if it does not move, the label was a
+name for something the three facts already say.
+"""
+
+[ops]
+n_slots = 5
+
+[knobs.chop_drop_trend_label]
+value = true
+why = """
+Stop consulting `trend` entirely. The vol refusal (`vol == "stressed"`) stays --
+this deletes the TAXONOMY, not the volatility guard, and losing the second
+silently would make this a different experiment than the one declared.
+
+This is the largest single change on the candidate list and it is here as a
+BOUND. Every other arm in this family asks "is this a better label"; this one
+asks "is a label worth having". Those are different questions and only the second
+one can tell you whether the first is worth answering.
+"""
+since = "2026-08-15"
+
+[knobs.chop_drawdown_band]
+value = [-0.2, -0.05]
+why = """
+Fact one of three: the name has fallen between 5% and 20% off its 252-day high.
+Identical to `wx-drawdown-band` on purpose -- if the two arms used different
+bands, the difference between them would not be the taxonomy.
+
+With the label gone this edge does more work than it does in C7: `drawdown` is
+now the only thing standing between the gate and a name in free fall, alongside
+the fast-leg guard below.
+"""
+since = "2026-08-15"
+
+[knobs.chop_max_realized_vol]
+value = 0.3
+why = """
+Fact two of three: annualised realized vol at or below 30%, the 75th percentile
+of the days the current gate admits. Identical to `wx-vol-ceiling` for the same
+reason the band above is identical to C7 -- the arms have to differ in ONE thing.
+
+Fact three is already in the live config and inherited unchanged:
+`chop_max_fast_fall = 0.01`, the down-only tactical guard A/B'd on 2026-07-18. It
+is not restated here because restating an inherited knob is how a variant's diff
+stops showing what the variant is.
+"""
+since = "2026-08-15"
+source = "2026-08-15 -- Weather-gate labelling, ten candidates, build brief"
