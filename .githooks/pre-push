@@ -1,0 +1,29 @@
+#!/bin/sh
+# Two gates before every push.
+#
+#   1. the fast test suite  -- nothing is broken
+#   2. `bench doctor`       -- nobody went around the bench
+#
+# The slow tests (pytest -m slow) run in CI, not here.
+#
+# Emergency bypass:  git push --no-verify
+#
+# Enabled by:  git config core.hooksPath .githooks
+
+set -e
+cd "$(git rev-parse --show-toplevel)"
+
+PY=.venv/bin/python
+[ -x "$PY" ] || PY=python3
+
+echo "pre-push: running fast test suite (pytest -m 'not slow')..."
+"$PY" -m pytest -q -m "not slow"
+
+# The live bot's config is only meant to change through `bench promote`. This
+# catches the two ways it silently does not: a hand-edit of variants/frozen.toml,
+# and a hand-edit whose lock was regenerated to match (which the golden test
+# alone cannot see -- the history is what gives it away). Warnings do not block.
+echo "pre-push: bench doctor..."
+PYTHONPATH=. "$PY" -m bench doctor
+
+echo "pre-push: OK"

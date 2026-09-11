@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.venv-live/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+.!*!*
+.idea/
+.vscode/
+
+# Market data and derived stores (never committed; ThetaData licence)
+data/
+*.parquet
+!fixtures/spy_wheel_cycle.parquet
+*.db
+*.sqlite
+*.csv
+*.log
+results/bench/
+results/best_run/
+
+# Working areas of the private repo
+scratchpad/
+archive/
+live/
+deploy/
+.claude/
+.worktrees/
+
+# Credentials and deployment
+*.key
+*.pem
+*.token
+.streamlit/secrets.toml
+.schwab/
+.wheelbot/
