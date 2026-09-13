@@ -1,6 +1,6 @@
 # Wheel Bot
 
-I sell cash-secured puts and covered calls (the "wheel") by fixed rules. I tested it on 531 US large-cap stocks with five years of option chains, filling at the bid and ask a real order would get. Paper trading only.
+I sell cash-secured puts and covered calls (the "wheel") by fixed rules, and I tested it on 531 US large-cap stocks with five years of option chains, filling at the bid and ask a real order would get. Paper trading only.
 
 ![Bot vs SPY buy-and-hold by year, 2024-08 to 2026-07](results/equity_by_year.png)
 
@@ -8,13 +8,13 @@ Yearly return of the current config against SPY buy-and-hold, 2024-08-01 to 2026
 
 ## Thesis
 
-I sell a cash-secured put on a company I would own anyway and get paid to wait for a price I like. If the stock holds I keep the premium and do it again. If it falls through the strike I own it below where it was and sell calls against it until it gets called away. To beat holding the same names, the premium has to cover the assignments that keep falling, and my picks have to be better than average, since the option market prices that tail about right. I sold puts blind on everything to see what premium alone is worth, then checked whether a selection rule adds anything.
+The idea is simple. I sell a cash-secured put on a company I'd own anyway and get paid to wait for a price I like. If the stock holds I keep the premium and do it again, and if it falls through the strike I own it below where it was and sell calls against it until it gets called away. The catch is that to beat just holding the same names, the premium has to cover the assignments that keep falling, and my picks have to be better than average, because the option market prices that tail about right. So I sold puts blind on everything first to see what premium alone is worth, then checked whether a selection rule adds anything on top.
 
 ## What I tested and what I learned
 
-- Selling puts blind loses. I sold a 0.40-delta put on every eligible day across 153 names, 2024-01-16 to 2026-07-01 (42,226 ticker-days). It lost 11.8 bps per trade at an 81.8% win rate. The 19% of losers cost more than the wins made.
-- Selection works. I ranked by volatility percentile, filled five slots from the top and got +22.92% over 2024-08-01 to 2026-07-01. The same slots in arbitrary order got +1.77%, cycles down from 142 to 79, assignment rate up from 19.7% to 32.9% (2026-08-18, before the exit-cost assumption below).
-- The current config trails SPY. Over 2024-08-01 to 2026-07-01, 531 names, five slots, it returns +8.16% (Sharpe 0.34, max drawdown -21.6%, 104 cycles). SPY returned +37.34% (Sharpe 1.07, -19.0%). The exit-side cost model below is an assumption. I tried roughly ninety variations of exits, entry gates and slot counts on the same dates. None reached SPY. The best got +31.83%. In a bull market this strong the premium does not cover what holding would have paid.
+- Selling puts blind loses. I sold a 0.40-delta put on every eligible day across 153 names, 2024-01-16 to 2026-07-01 (42,226 ticker-days), and it lost 11.8 bps per trade at an 81.8% win rate. Winning that often sounds great until you see that the 19% of losers cost more than all the wins made.
+- Selection works. I ranked by volatility percentile, filled five slots from the top and got +22.92% over 2024-08-01 to 2026-07-01. The same slots in arbitrary order got +1.77%, cycles down from 142 to 79, assignment rate up from 19.7% to 32.9% (2026-08-18, before the exit-cost assumption below). Honestly I didn't expect the gap to be that wide.
+- The current config trails SPY. Over 2024-08-01 to 2026-07-01, 531 names, five slots, it returns +8.16% (Sharpe 0.34, max drawdown -21.6%, 104 cycles), while SPY returned +37.34% (Sharpe 1.07, -19.0%). The exit-side cost model below is an assumption. I tried roughly ninety variations of exits, entry gates and slot counts on the same dates and none of them reached SPY, the best got +31.83%. What I found is that in a bull market this strong the premium just doesn't cover what holding would have paid.
 
 Things I measured and dropped (2024-08 to 2026-07 unless dated otherwise, before the exit-cost assumption):
 
@@ -29,27 +29,27 @@ Things I measured and dropped (2024-08 to 2026-07 unless dated otherwise, before
 
 ## How it was tested
 
-Data. ThetaData end-of-day option chains, 290.6M rows, 530 of 531 tickers (NVR lists no expirations), 2021-08-09 to 2026-08-07, DTE 60 or less, about 7 GB. I bought open interest on its own: 534 tickers, 61 months, 205M rows. The stores are not in this repo. The scorecards are.
+Data. ThetaData end-of-day option chains, 290.6M rows, 530 of 531 tickers (NVR lists no expirations), 2021-08-09 to 2026-08-07, DTE 60 or less, about 7 GB. I bought open interest on its own: 534 tickers, 61 months, 205M rows. The stores aren't in this repo, the scorecards are.
 
-Fills. I sell at the bid and buy at the ask, Schwab quotes. Commission $0.65 plus $0.05 pass-through per contract per side, $1.40 round trip. Assignment fee $0 (not yet checked against a statement). Covered-call writes and put buybacks bigger than 10% of open interest or 25% of volume pay one extra spread. I set that as a floor on impact and have not measured the real number.
+Fills. I sell at the bid and buy at the ask, Schwab quotes. Commission is $0.65 plus $0.05 pass-through per contract per side, so $1.40 round trip. Assignment fee $0 (not yet checked against a statement). Covered-call writes and put buybacks bigger than 10% of open interest or 25% of volume pay one extra spread. I set that as a floor on impact and haven't measured the real number yet.
 
 Config (frozen 2026-09-05). Put delta 0.30, call delta 0.50, target DTE 11 (band 9 to 15), put take-profit at 60% of premium, calls held to expiry, five slots, open-interest floor 10 and volume floor 4, 8% annualised yield floor on collateral, earnings blackout through expiry plus one day.
 
-Validation. One fixed window, 2024-08-01 to 2026-07-01, 531 names. Each variant is a TOML file in `variants/` that states its pass bar before it runs. The bench scores it against the frozen config and SPY and writes a JSON scorecard. Open-interest data is complete from 2024-08 (533 of 534 tickers, against 86 of 534 before), so the window starts there.
+Validation. One fixed window, 2024-08-01 to 2026-07-01, 531 names. Each variant is a TOML file in `variants/` that states its pass bar before it runs, and the bench scores it against the frozen config and SPY and writes a JSON scorecard. Open-interest data is complete from 2024-08 (533 of 534 tickers, against 86 of 534 before), which is why the window starts there.
 
 Known gaps:
 
 - No walk-forward and no held-out period. I scored all the variations on the same 23 months, so the search is in-sample. My only check against a lucky cell is re-scoring each candidate at 20 slots.
-- The window has no sustained bear market, and that is where the wheel loses.
+- The window has no sustained bear market, and that's exactly where the wheel loses.
 - Slippage is the quoted spread plus the exit-side assumption. No partial fills.
 
 ## Where it stands
 
-Paused. Engine, fill model, bench and frozen config are done, with a result on 2024-08 to 2026-07. Paper trading against live quotes has run on a VPS since 2026-07-18. I paused the research in 2026-09 when a gap-fill question on the same universe looked more promising. I have not done a held-out test or a bear-market window. I don't know yet whether a selection rule can close a 29-point gap to SPY, or whether the wheel is a yield strategy I should judge on income and drawdown instead of total return. Next I want a 2022-style window and a scorecard that shows premium income and drawdown next to total return.
+Paused. The engine, fill model, bench and frozen config are done, with a result on 2024-08 to 2026-07, and paper trading against live quotes has run on a VPS since 2026-07-18. I paused the research in 2026-09 when a gap-fill question on the same universe looked more promising. I haven't done a held-out test or a bear-market window, and I genuinely don't know yet whether a selection rule can close a 29-point gap to SPY, or whether the wheel is a yield strategy I should be judging on income and drawdown instead of total return. Next I want a 2022-style window and a scorecard that shows premium income and drawdown next to total return.
 
 ## What this is not
 
-Paper trading only, simulated fills against real quotes, no order-placement code. Not investment advice. I am not claiming a live edge. On the window I tested there is none over SPY.
+Paper trading only, simulated fills against real quotes, no order-placement code. Not investment advice. I'm not claiming a live edge. On the window I tested there isn't one over SPY.
 
 ## How to run it
 
